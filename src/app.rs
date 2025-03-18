@@ -3,9 +3,10 @@ use winit::application::ApplicationHandler;
 use winit::dpi::LogicalSize;
 use winit::event::WindowEvent;
 use winit::event_loop::ActiveEventLoop;
-use winit::keyboard::KeyCode;
+use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowId};
 
+use crate::enemy::Enemy;
 use crate::player::Player;
 use crate::world::World;
 use crate::{HEIGHT, WIDTH};
@@ -28,12 +29,13 @@ impl Default for App {
 
 impl ApplicationHandler for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+        let size = LogicalSize::new(WIDTH as f64, HEIGHT as f64);
         let window = event_loop
             .create_window(
                 Window::default_attributes()
-                    .with_inner_size(LogicalSize::new(WIDTH as f64, HEIGHT as f64))
-                    .with_min_inner_size(LogicalSize::new(WIDTH as f64, HEIGHT as f64))
-                    .with_max_inner_size(LogicalSize::new(WIDTH as f64, HEIGHT as f64)),
+                    .with_inner_size(size)
+                    .with_min_inner_size(size)
+                    .with_max_inner_size(size),
             )
             .unwrap();
         let window_size = window.inner_size();
@@ -42,9 +44,11 @@ impl ApplicationHandler for App {
 
         let mut world = World::new(WIDTH, HEIGHT);
         world.set_player(Player::new(10, 10, 10, 10));
+        world.set_enemy(Enemy::new(10, 10, 10, 10));
         self.world = Some(world);
 
         self.window = Some(window);
+        self.window.as_ref().unwrap().request_redraw();
     }
 
     fn window_event(&mut self, event_loop: &ActiveEventLoop, id: WindowId, event: WindowEvent) {
@@ -58,14 +62,13 @@ impl ApplicationHandler for App {
                 event,
                 is_synthetic,
             } => {
-                let physical_key = event.physical_key;
-
-                if event.state.is_pressed() {
-                    if physical_key == KeyCode::Escape {
+                let pressed = event.state.is_pressed();
+                if let PhysicalKey::Code(key) = event.physical_key {
+                    if key == KeyCode::Escape {
                         event_loop.exit();
-                    } else {
-                        player.input(physical_key);
+                        return;
                     }
+                    player.input(key, pressed);
                 }
             }
 
@@ -81,6 +84,7 @@ impl ApplicationHandler for App {
                 // the program to gracefully handle redraws requested by the OS.
 
                 // Draw.
+                println!("Redrawing");
                 world.update();
 
                 let frame = pixels.frame_mut();

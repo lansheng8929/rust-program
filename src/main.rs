@@ -1,7 +1,12 @@
+#![deny(clippy::all)]
+#![forbid(unsafe_code)]
+
 use app::App;
 use winit::event_loop::{ControlFlow, EventLoop};
 
 mod app;
+mod enemy;
+mod input_state;
 mod player;
 mod uitils;
 mod world;
