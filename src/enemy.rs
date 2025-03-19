@@ -1,4 +1,4 @@
-use crate::uitils::constrain_to_bounds;
+use crate::uitils::{constrain_to_bounds, is_within_bounds};
 
 pub(crate) struct Enemy {
     width: i16,
@@ -40,12 +40,12 @@ impl Enemy {
     }
 
     fn enemy_move(&mut self, width: u32, height: u32) {
-        let x = self.speed + self.x;
-        let y = self.speed + self.y;
+        let new_x = self.x + self.speed;
+        let new_y = self.y + self.speed;
 
         let (x_constrained, y_constrained) = constrain_to_bounds(
-            x as i32,
-            y as i32,
+            new_x as i32,
+            new_y as i32,
             width.saturating_sub(self.width as u32),
             height.saturating_sub(self.height as u32),
         );

@@ -1,4 +1,5 @@
 use pixels::{Pixels, SurfaceTexture};
+use rand::Rng;
 use winit::application::ApplicationHandler;
 use winit::dpi::LogicalSize;
 use winit::event::WindowEvent;
@@ -6,12 +7,14 @@ use winit::event_loop::ActiveEventLoop;
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowId};
 
+use crate::apple::Apple;
 use crate::enemy::Enemy;
 use crate::player::Player;
 use crate::world::World;
 use crate::{HEIGHT, WIDTH};
 
 pub(crate) struct App {
+    frame_count: u32,
     window: Option<Window>,
     pixels: Option<Pixels>,
     world: Option<World>,
@@ -20,6 +23,7 @@ pub(crate) struct App {
 impl Default for App {
     fn default() -> Self {
         Self {
+            frame_count: 0,
             window: None,
             pixels: None,
             world: None,
@@ -84,8 +88,17 @@ impl ApplicationHandler for App {
                 // the program to gracefully handle redraws requested by the OS.
 
                 // Draw.
-                println!("Redrawing");
+
+                self.frame_count = (self.frame_count + 1) % u32::MAX;
+
                 world.update();
+                if self.frame_count % 60 == 0 {
+                    println!("{}", world.apple.len());
+                    if world.apple.len() < 100 {
+                        let mut rng = rand::thread_rng();
+                        world.add_apple(Apple::new(20, rng.gen_range(0..WIDTH as i16), 0, 5));
+                    }
+                }
 
                 let frame = pixels.frame_mut();
                 for (i, pixel) in frame.chunks_exact_mut(4).enumerate() {

@@ -5,6 +5,7 @@ use app::App;
 use winit::event_loop::{ControlFlow, EventLoop};
 
 mod app;
+mod apple;
 mod enemy;
 mod input_state;
 mod player;

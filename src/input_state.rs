@@ -1,4 +1,4 @@
-use winit::keyboard::{KeyCode, PhysicalKey};
+use winit::keyboard::KeyCode;
 
 pub(crate) struct InputState {
     pub(crate) left_pressed: bool,

@@ -1,4 +1,4 @@
-use winit::keyboard::{KeyCode, PhysicalKey};
+use winit::keyboard::KeyCode;
 
 use crate::{input_state::InputState, uitils::constrain_to_bounds};
 
