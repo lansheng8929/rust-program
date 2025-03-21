@@ -1,6 +1,6 @@
 use crate::uitils::{constrain_to_bounds, is_within_bounds};
 
-pub(crate) struct Enemy {
+pub struct Enemy {
     width: i16,
     height: i16,
     x: i16,
@@ -21,7 +21,7 @@ impl Default for Enemy {
 }
 
 impl Enemy {
-    pub(crate) fn new(size: i16, x: i16, y: i16, speed: i16) -> Self {
+    pub fn new(size: i16, x: i16, y: i16, speed: i16) -> Self {
         Self {
             width: size,
             height: size,
@@ -31,11 +31,11 @@ impl Enemy {
         }
     }
 
-    pub(crate) fn update(&mut self, width: u32, height: u32) {
+    pub fn update(&mut self, width: u32, height: u32) {
         self.enemy_move(width, height);
     }
 
-    pub(crate) fn draw(&self, x: i16, y: i16) -> bool {
+    pub fn draw(&self, x: i16, y: i16) -> bool {
         x >= self.x && x < self.x + self.width && y >= self.y && y < self.y + self.height
     }
 

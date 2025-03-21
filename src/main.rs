@@ -6,7 +6,10 @@ use winit::event_loop::{ControlFlow, EventLoop};
 
 mod app;
 mod apple;
+mod cursor_state;
 mod enemy;
+mod game_data;
+mod gui;
 mod input_state;
 mod player;
 mod rectangle;

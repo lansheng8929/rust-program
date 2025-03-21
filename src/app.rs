@@ -8,16 +8,22 @@ use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowId};
 
 use crate::apple::Apple;
+use crate::cursor_state::CursorState;
 use crate::enemy::Enemy;
+use crate::game_data::GameData;
+use crate::gui::{Button, GuiManager, Label};
 use crate::player::Player;
 use crate::world::World;
 use crate::{HEIGHT, WIDTH};
 
-pub(crate) struct App {
+pub struct App {
     frame_count: u32,
     window: Option<Window>,
     pixels: Option<Pixels>,
     world: Option<World>,
+    gui: Option<GuiManager>,
+    cursor_state: CursorState,
+    game_data: GameData,
 }
 
 impl Default for App {
@@ -27,6 +33,9 @@ impl Default for App {
             window: None,
             pixels: None,
             world: None,
+            gui: None,
+            cursor_state: CursorState::new(),
+            game_data: GameData::default(),
         }
     }
 }
@@ -47,24 +56,50 @@ impl ApplicationHandler for App {
         self.pixels = Some(Pixels::new(WIDTH, HEIGHT, surface_texture).unwrap());
 
         let mut world = World::new(WIDTH, HEIGHT);
-        world.set_player(Player::new(10, 10, 10, 3));
+        world.set_player(Player::new(10, 10, HEIGHT as i32 - 10, 3));
         // world.set_enemy(Enemy::new(10, 10, 10, 10));
         self.world = Some(world);
+
+        let mut gui = GuiManager::new();
+        self.gui = Some(gui);
 
         self.window = Some(window);
         self.window.as_ref().unwrap().request_redraw();
     }
 
-    fn window_event(&mut self, event_loop: &ActiveEventLoop, id: WindowId, event: WindowEvent) {
+    fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
         let world = self.world.as_mut().unwrap();
         let player = world.player.as_mut().unwrap();
         let pixels = self.pixels.as_mut().unwrap();
+        let gui = self.gui.as_mut().unwrap();
+        let cursor_state = &mut self.cursor_state;
 
         match event {
+            WindowEvent::CursorMoved { position, .. } => {
+                let window = self.window.as_ref().unwrap();
+                let window_size = window.inner_size();
+
+                // 计算缩放比例
+                let scale_x = WIDTH as f64 / window_size.width as f64;
+                let scale_y = HEIGHT as f64 / window_size.height as f64;
+
+                // 转换坐标
+                let pixels_x = (position.x * scale_x) as i32;
+                let pixels_y = (position.y * scale_y) as i32;
+
+                cursor_state.position = (pixels_x, pixels_y);
+            }
+            WindowEvent::MouseInput {
+                device_id: _,
+                state: _,
+                button: _,
+            } => {
+                // gui.handle_event(&button, &state, &cursor_state);
+            }
             WindowEvent::KeyboardInput {
-                device_id,
+                device_id: _,
                 event,
-                is_synthetic,
+                is_synthetic: _,
             } => {
                 let pressed = event.state.is_pressed();
                 if let PhysicalKey::Code(key) = event.physical_key {
@@ -91,7 +126,10 @@ impl ApplicationHandler for App {
 
                 self.frame_count = (self.frame_count + 1) % u32::MAX;
 
-                world.update();
+                world.update(&mut || {
+                    self.game_data.score += 1;
+                });
+
                 if self.frame_count % 60 == 0 {
                     if world.apple.len() < 100 {
                         let mut rng = rand::thread_rng();
@@ -106,11 +144,14 @@ impl ApplicationHandler for App {
 
                     world.draw(pixel, x, y);
                 }
+                gui.draw(frame, WIDTH as usize, HEIGHT as usize, &self.game_data);
                 if let Err(err) = pixels.render() {
                     println!("pixels.render() failed: {}", err);
                     event_loop.exit();
                     return;
                 }
+
+                // Draw.
 
                 // Queue a RedrawRequested event.
                 //

@@ -1,15 +1,15 @@
-use crate::{apple::Apple, enemy::Enemy, player::Player};
+use crate::{apple::Apple, enemy::Enemy, game_data::GameData, player::Player};
 
-pub(crate) struct World {
+pub struct World {
     width: u32,
     height: u32,
-    pub(crate) player: Option<Player>,
-    pub(crate) enemy: Option<Enemy>,
-    pub(crate) apple: Vec<Apple>,
+    pub player: Option<Player>,
+    pub enemy: Option<Enemy>,
+    pub apple: Vec<Apple>,
 }
 
 impl World {
-    pub(crate) fn new(width: u32, height: u32) -> Self {
+    pub fn new(width: u32, height: u32) -> Self {
         Self {
             width,
             height,
@@ -19,23 +19,39 @@ impl World {
         }
     }
 
-    pub(crate) fn update(&mut self) {
+    pub fn update(&mut self, change_score_callback: &mut dyn FnMut()) {
         let player = self.player.as_mut().unwrap();
 
         player.update(self.width, self.height);
 
         // self.enemy.as_mut().unwrap().update(self.width, self.height);
 
-        self.apple
-            .retain(|apple| apple.bounds.y as u32 + apple.bounds.height <= self.height);
-        self.apple
-            .retain(|apple| !apple.bounds.is_overlapping(&player.bounds));
+        // 玩家接住苹果删除苹果
+        let mut to_remove: Vec<usize> = Vec::new();
+        for (i, apple) in self.apple.iter().enumerate() {
+            // 超出屏幕底部
+            if apple.bounds.y as u32 + apple.bounds.height > self.height {
+                to_remove.push(i);
+                continue;
+            }
+
+            // 与玩家碰撞
+            if apple.bounds.is_overlapping(&player.bounds) {
+                change_score_callback();
+                to_remove.push(i);
+            }
+        }
+        // 从后向前移除元素
+        for &i in to_remove.iter().rev() {
+            self.apple.remove(i);
+        }
+
         for apple in self.apple.iter_mut() {
             apple.update();
         }
     }
 
-    pub(crate) fn draw(&self, pixel: &mut [u8], x: i32, y: i32) {
+    pub fn draw(&self, pixel: &mut [u8], x: i32, y: i32) {
         let inside_the_player = self.player.as_ref().unwrap().draw(x, y);
         // let inside_the_enemy = self.enemy.as_ref().unwrap().draw(x, y);
         let mut inside_apple = false;
@@ -55,21 +71,21 @@ impl World {
         else if inside_apple {
             [0xff, 0x00, 0x00, 0xff]
         } else {
-            [0x48, 0xb2, 0xe8, 0xff]
+            [0x00, 0x00, 0x00, 0xff]
         };
 
         pixel.copy_from_slice(&rgba);
     }
 
-    pub(crate) fn set_player(&mut self, player: Player) {
+    pub fn set_player(&mut self, player: Player) {
         self.player = Some(player);
     }
 
-    pub(crate) fn set_enemy(&mut self, enemy: Enemy) {
+    pub fn set_enemy(&mut self, enemy: Enemy) {
         self.enemy = Some(enemy);
     }
 
-    pub(crate) fn add_apple(&mut self, apple: Apple) {
+    pub fn add_apple(&mut self, apple: Apple) {
         self.apple.push(apple)
     }
 }

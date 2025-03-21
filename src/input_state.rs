@@ -1,10 +1,10 @@
 use winit::keyboard::KeyCode;
 
-pub(crate) struct InputState {
-    pub(crate) left_pressed: bool,
-    pub(crate) right_pressed: bool,
-    pub(crate) up_pressed: bool,
-    pub(crate) down_pressed: bool,
+pub struct InputState {
+    pub left_pressed: bool,
+    pub right_pressed: bool,
+    pub up_pressed: bool,
+    pub down_pressed: bool,
 }
 
 impl Default for InputState {
