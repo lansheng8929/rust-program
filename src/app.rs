@@ -47,8 +47,8 @@ impl ApplicationHandler for App {
         self.pixels = Some(Pixels::new(WIDTH, HEIGHT, surface_texture).unwrap());
 
         let mut world = World::new(WIDTH, HEIGHT);
-        world.set_player(Player::new(10, 10, 10, 10));
-        world.set_enemy(Enemy::new(10, 10, 10, 10));
+        world.set_player(Player::new(10, 10, 10, 3));
+        // world.set_enemy(Enemy::new(10, 10, 10, 10));
         self.world = Some(world);
 
         self.window = Some(window);
@@ -93,17 +93,16 @@ impl ApplicationHandler for App {
 
                 world.update();
                 if self.frame_count % 60 == 0 {
-                    println!("{}", world.apple.len());
                     if world.apple.len() < 100 {
                         let mut rng = rand::thread_rng();
-                        world.add_apple(Apple::new(20, rng.gen_range(0..WIDTH as i16), 0, 5));
+                        world.add_apple(Apple::new(20, rng.gen_range(0..WIDTH) as i32, 0, 1));
                     }
                 }
 
                 let frame = pixels.frame_mut();
                 for (i, pixel) in frame.chunks_exact_mut(4).enumerate() {
-                    let x = (i % WIDTH as usize) as i16;
-                    let y = (i / WIDTH as usize) as i16;
+                    let x = (i % WIDTH as usize) as i32;
+                    let y = (i / HEIGHT as usize) as i32;
 
                     world.draw(pixel, x, y);
                 }

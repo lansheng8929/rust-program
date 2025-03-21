@@ -9,6 +9,7 @@ mod apple;
 mod enemy;
 mod input_state;
 mod player;
+mod rectangle;
 mod uitils;
 mod world;
 
