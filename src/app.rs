@@ -60,7 +60,7 @@ impl ApplicationHandler for App {
         // world.set_enemy(Enemy::new(10, 10, 10, 10));
         self.world = Some(world);
 
-        let mut gui = GuiManager::new();
+        let gui = GuiManager::new();
         self.gui = Some(gui);
 
         self.window = Some(window);
@@ -126,9 +126,8 @@ impl ApplicationHandler for App {
 
                 self.frame_count = (self.frame_count + 1) % u32::MAX;
 
-                world.update(&mut || {
-                    self.game_data.score += 1;
-                });
+                world.update(&mut self.game_data);
+                gui.update(&self.game_data);
 
                 if self.frame_count % 60 == 0 {
                     if world.apple.len() < 100 {
@@ -143,8 +142,8 @@ impl ApplicationHandler for App {
                     let y = (i / HEIGHT as usize) as i32;
 
                     world.draw(pixel, x, y);
+                    gui.draw(pixel, x, y);
                 }
-                gui.draw(frame, WIDTH as usize, HEIGHT as usize, &self.game_data);
                 if let Err(err) = pixels.render() {
                     println!("pixels.render() failed: {}", err);
                     event_loop.exit();

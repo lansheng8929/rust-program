@@ -1,4 +1,9 @@
-use crate::{apple::Apple, enemy::Enemy, game_data::GameData, player::Player};
+use crate::{
+    apple::Apple,
+    enemy::Enemy,
+    game_data::{self, GameData},
+    player::Player,
+};
 
 pub struct World {
     width: u32,
@@ -19,7 +24,7 @@ impl World {
         }
     }
 
-    pub fn update(&mut self, change_score_callback: &mut dyn FnMut()) {
+    pub fn update(&mut self, game_data: &mut GameData) {
         let player = self.player.as_mut().unwrap();
 
         player.update(self.width, self.height);
@@ -37,7 +42,7 @@ impl World {
 
             // 与玩家碰撞
             if apple.bounds.is_overlapping(&player.bounds) {
-                change_score_callback();
+                game_data.score += 1;
                 to_remove.push(i);
             }
         }

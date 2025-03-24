@@ -2,14 +2,13 @@ use winit::event::{ElementState, MouseButton, WindowEvent};
 
 use crate::{
     WIDTH,
-    cursor_state::CursorState,
     game_data::{self, GameData},
 };
 
 use super::Label;
 
 pub struct GuiManager {
-    label: Label,
+    pub label: Label,
 }
 
 impl GuiManager {
@@ -19,8 +18,11 @@ impl GuiManager {
         }
     }
 
-    pub fn draw(&self, frame: &mut [u8], width: usize, height: usize, game_data: &GameData) {
-        self.label
-            .draw(frame, width, height, game_data.score.to_string());
+    pub fn update(&mut self, game_data: &GameData) {
+        self.label.set_label(game_data.score.to_string());
+    }
+
+    pub fn draw(&self, pixel: &mut [u8], x: i32, y: i32) {
+        self.label.draw(pixel, x, y);
     }
 }
