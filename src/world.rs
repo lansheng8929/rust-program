@@ -3,6 +3,7 @@ use crate::{
     enemy::Enemy,
     game_data::{self, GameData},
     player::Player,
+    sound::{SoundEffect, SoundManager},
 };
 
 pub struct World {
@@ -11,6 +12,7 @@ pub struct World {
     pub player: Option<Player>,
     pub enemy: Option<Enemy>,
     pub apple: Vec<Apple>,
+    pub sound_manager: SoundManager,
 }
 
 impl World {
@@ -21,6 +23,7 @@ impl World {
             player: None,
             enemy: None,
             apple: Vec::new(),
+            sound_manager: SoundManager::new(),
         }
     }
 
@@ -43,6 +46,10 @@ impl World {
             // 与玩家碰撞
             if apple.bounds.is_overlapping(&player.bounds) {
                 game_data.score += 1;
+                // 播放收集音效
+                if let Err(e) = self.sound_manager.play_sound(&SoundEffect::Collect) {
+                    eprintln!("Failed to play collect sound: {}", e);
+                }
                 to_remove.push(i);
             }
         }

@@ -13,6 +13,7 @@ mod gui;
 mod input_state;
 mod player;
 mod rectangle;
+mod sound;
 mod uitils;
 mod world;
 
