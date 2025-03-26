@@ -5,7 +5,7 @@ use app::App;
 use winit::event_loop::{ControlFlow, EventLoop};
 
 mod app;
-mod apple;
+mod bullet;
 mod cursor_state;
 mod enemy;
 mod game_data;

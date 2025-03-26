@@ -1,56 +1,36 @@
-use crate::uitils::{constrain_to_bounds, is_within_bounds};
+use crate::rectangle::Rectangle;
 
 pub struct Enemy {
-    width: i16,
-    height: i16,
-    x: i16,
-    y: i16,
-    speed: i16,
+    pub bounds: Rectangle,
+    speed: f32,
 }
 
 impl Default for Enemy {
     fn default() -> Self {
         Self {
-            width: 10,
-            height: 10,
-            x: 10,
-            y: 10,
-            speed: 2,
+            bounds: Rectangle::new(10, 10, 10, 10),
+            speed: 2.0,
         }
     }
 }
 
 impl Enemy {
-    pub fn new(size: i16, x: i16, y: i16, speed: i16) -> Self {
-        Self {
-            width: size,
-            height: size,
-            x,
-            y,
-            speed,
-        }
+    pub fn new(size: u32, x: i32, y: i32, speed: f32) -> Self {
+        let mut bounds = Rectangle::new(x, y, size, size);
+        bounds.load_texture("assets/enemy.png");
+
+        Self { bounds, speed }
     }
 
     pub fn update(&mut self, width: u32, height: u32) {
-        self.enemy_move(width, height);
+        self.bounds.y = (self.bounds.y as f32 + self.speed) as i32;
+        if self.bounds.y > height as i32 {
+            self.bounds.y = 0;
+            self.bounds.x = rand::random::<i32>() % width as i32;
+        }
     }
 
-    pub fn draw(&self, x: i16, y: i16) -> bool {
-        x >= self.x && x < self.x + self.width && y >= self.y && y < self.y + self.height
-    }
-
-    fn enemy_move(&mut self, width: u32, height: u32) {
-        let new_x = self.x + self.speed;
-        let new_y = self.y + self.speed;
-
-        let (x_constrained, y_constrained) = constrain_to_bounds(
-            new_x as i32,
-            new_y as i32,
-            width.saturating_sub(self.width as u32),
-            height.saturating_sub(self.height as u32),
-        );
-
-        self.x = x_constrained as i16;
-        self.y = y_constrained as i16;
+    pub fn draw(&self, x: i32, y: i32) -> bool {
+        self.bounds.contains_point(x, y)
     }
 }

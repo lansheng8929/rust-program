@@ -5,6 +5,7 @@ pub struct InputState {
     pub right_pressed: bool,
     pub up_pressed: bool,
     pub down_pressed: bool,
+    pub shoot_pressed: bool,
 }
 
 impl Default for InputState {
@@ -14,6 +15,7 @@ impl Default for InputState {
             right_pressed: false,
             up_pressed: false,
             down_pressed: false,
+            shoot_pressed: false,
         }
     }
 }
@@ -25,6 +27,7 @@ impl InputState {
             KeyCode::KeyA => self.left_pressed = pressed,
             KeyCode::KeyS => self.down_pressed = pressed,
             KeyCode::KeyD => self.right_pressed = pressed,
+            KeyCode::Space => self.shoot_pressed = pressed,
             _ => (),
         }
     }

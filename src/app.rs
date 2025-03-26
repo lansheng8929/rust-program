@@ -7,7 +7,6 @@ use winit::event_loop::ActiveEventLoop;
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowId};
 
-use crate::apple::Apple;
 use crate::cursor_state::CursorState;
 use crate::enemy::Enemy;
 use crate::game_data::GameData;
@@ -56,7 +55,7 @@ impl ApplicationHandler for App {
         self.pixels = Some(Pixels::new(WIDTH, HEIGHT, surface_texture).unwrap());
 
         let mut world = World::new(WIDTH, HEIGHT);
-        world.set_player(Player::new(20, 10, HEIGHT as i32 - 10, 3));
+        world.set_player(Player::new(20, 10, HEIGHT as i32 - 10, 3.0));
         // world.set_enemy(Enemy::new(10, 10, 10, 10));
         self.world = Some(world);
 
@@ -126,15 +125,17 @@ impl ApplicationHandler for App {
 
                 self.frame_count = (self.frame_count + 1) % u32::MAX;
 
-                world.update(&mut self.game_data);
-                gui.update(&self.game_data);
-
-                if self.frame_count % 60 == 0 {
-                    if world.apple.len() < 100 {
-                        let mut rng = rand::thread_rng();
-                        world.add_apple(Apple::new(20, rng.gen_range(0..WIDTH) as i32, 0, 1));
+                // 每隔一段时间生成新的敌人
+                if self.frame_count % 300 == 0 {
+                    // 每300帧生成新敌人
+                    if world.enemies.len() < 10 {
+                        // 限制最大敌人数量
+                        world.spawn_enemies(2);
                     }
                 }
+
+                world.update(&mut self.game_data);
+                gui.update(&self.game_data);
 
                 let frame = pixels.frame_mut();
                 for (i, pixel) in frame.chunks_exact_mut(4).enumerate() {

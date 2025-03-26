@@ -1,31 +1,41 @@
+use std::f32::consts::PI;
+
 use winit::keyboard::KeyCode;
 
-use crate::{input_state::InputState, rectangle::Rectangle, uitils::constrain_to_bounds};
+use crate::{
+    bullet::{Bullet, BulletOwner},
+    input_state::InputState,
+    rectangle::Rectangle,
+    uitils::constrain_to_bounds,
+};
 
 pub struct Player {
     pub bounds: Rectangle,
-    speed: i32,
+    speed: f32,
     input_state: InputState,
+    shoot_cooldown: u32,
 }
 
 impl Default for Player {
     fn default() -> Self {
         Self {
             bounds: Rectangle::new(10, 10, 10, 10),
-            speed: 2,
+            speed: 2.0,
             input_state: InputState::default(),
+            shoot_cooldown: 0,
         }
     }
 }
 
 impl Player {
-    pub fn new(size: u32, x: i32, y: i32, speed: i32) -> Self {
+    pub fn new(size: u32, x: i32, y: i32, speed: f32) -> Self {
         let mut bounds = Rectangle::new(x, y, size, size);
         bounds.load_texture("assets/player.png");
         Self {
             bounds,
             speed,
             input_state: InputState::default(),
+            shoot_cooldown: 0,
         }
     }
 
@@ -52,10 +62,10 @@ impl Player {
 
     fn handle_input(&mut self) {
         if self.input_state.left_pressed {
-            self.bounds.x -= self.speed;
+            self.bounds.x -= self.speed as i32;
         }
         if self.input_state.right_pressed {
-            self.bounds.x += self.speed;
+            self.bounds.x += self.speed as i32;
         }
         // if self.input_state.up_pressed {
         //     self.bounds.y -= self.speed;
@@ -63,5 +73,23 @@ impl Player {
         // if self.input_state.down_pressed {
         //     self.bounds.y += self.speed;
         // }
+    }
+
+    pub fn try_shoot(&mut self) -> Option<Bullet> {
+        if self.input_state.shoot_pressed && self.shoot_cooldown == 0 {
+            self.shoot_cooldown = 10;
+            Some(Bullet::new(
+                self.bounds.x + (self.bounds.width as i32 / 2),
+                self.bounds.y,
+                5.0,
+                -PI / 2.0,
+                BulletOwner::Player,
+            ))
+        } else {
+            if self.shoot_cooldown > 0 {
+                self.shoot_cooldown -= 1;
+            }
+            None
+        }
     }
 }

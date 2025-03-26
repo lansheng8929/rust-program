@@ -1,4 +1,4 @@
-use image::{DynamicImage, RgbaImage};
+use image::{DynamicImage, ImageBuffer, RgbaImage};
 
 #[derive(Debug, Clone)]
 pub struct Rectangle {
@@ -6,7 +6,21 @@ pub struct Rectangle {
     pub y: i32,
     pub width: u32,
     pub height: u32,
+    pub angle: f32,
     pub texture: Option<RgbaImage>,
+}
+
+impl Default for Rectangle {
+    fn default() -> Self {
+        Self {
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 100,
+            angle: 0.0,
+            texture: None,
+        }
+    }
 }
 
 impl Rectangle {
@@ -16,6 +30,7 @@ impl Rectangle {
             y,
             width,
             height,
+            angle: 0.0,
             texture: None,
         }
     }
@@ -31,7 +46,16 @@ impl Rectangle {
                 );
                 self.texture = Some(resized.to_rgba8());
             }
-            Err(e) => println!("Failed to load texture: {}", e),
+            Err(e) => {
+                println!("Failed to load texture: {}", e);
+
+                let mut texture = ImageBuffer::new(self.width, self.height);
+                // 填充紫色 (R:255, G:0, B:255, A:255)
+                for pixel in texture.pixels_mut() {
+                    *pixel = image::Rgba([255, 0, 255, 255]);
+                }
+                self.texture = Some(texture);
+            }
         }
     }
 
@@ -68,5 +92,10 @@ impl Rectangle {
             && point_x < self.x + self.width as i32
             && point_y >= self.y
             && point_y < self.y + self.height as i32
+    }
+
+    pub fn with_angle(mut self, angle: f32) -> Self {
+        self.angle = angle;
+        self
     }
 }
