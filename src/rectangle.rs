@@ -1,9 +1,12 @@
-#[derive(Debug, Clone, Copy)]
+use image::{DynamicImage, RgbaImage};
+
+#[derive(Debug, Clone)]
 pub struct Rectangle {
     pub x: i32,
     pub y: i32,
     pub width: u32,
     pub height: u32,
+    pub texture: Option<RgbaImage>,
 }
 
 impl Rectangle {
@@ -13,7 +16,38 @@ impl Rectangle {
             y,
             width,
             height,
+            texture: None,
         }
+    }
+
+    pub fn load_texture(&mut self, path: &str) {
+        match image::open(path) {
+            Ok(img) => {
+                // 将图片调整为rectangle的大小
+                let resized = img.resize_exact(
+                    self.width,
+                    self.height,
+                    image::imageops::FilterType::Nearest,
+                );
+                self.texture = Some(resized.to_rgba8());
+            }
+            Err(e) => println!("Failed to load texture: {}", e),
+        }
+    }
+
+    pub fn draw_pixel(&self, x: i32, y: i32) -> [u8; 4] {
+        if let Some(texture) = &self.texture {
+            // 计算相对于矩形左上角的坐标
+            let rel_x = x - self.x;
+            let rel_y = y - self.y;
+
+            if rel_x >= 0 && rel_y >= 0 && rel_x < self.width as i32 && rel_y < self.height as i32 {
+                // 获取纹理中对应位置的像素
+                let pixel = texture.get_pixel(rel_x as u32, rel_y as u32);
+                return pixel.0;
+            }
+        }
+        [0, 0, 0, 0] // 返回透明像素
     }
 
     pub fn is_overlapping(&self, other: &Rectangle) -> bool {

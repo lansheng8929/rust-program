@@ -16,10 +16,9 @@ impl Default for Apple {
 
 impl Apple {
     pub fn new(size: u32, x: i32, y: i32, speed: i32) -> Self {
-        Self {
-            bounds: Rectangle::new(x, y, size, size),
-            speed,
-        }
+        let mut bounds = Rectangle::new(x, y, size, size);
+        bounds.load_texture("assets/apple.png");
+        Self { bounds, speed }
     }
 
     pub fn update(&mut self) {

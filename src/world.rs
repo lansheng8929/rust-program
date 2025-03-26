@@ -57,29 +57,21 @@ impl World {
     }
 
     pub fn draw(&self, pixel: &mut [u8], x: i32, y: i32) {
-        let inside_the_player = self.player.as_ref().unwrap().draw(x, y);
-        // let inside_the_enemy = self.enemy.as_ref().unwrap().draw(x, y);
-        let mut inside_apple = false;
-        for apple in self.apple.iter() {
-            if apple.draw(x, y) {
-                inside_apple = true;
-                break;
-            }
-        }
+        let player = self.player.as_ref().unwrap();
+        let apple_pixel = self
+            .apple
+            .iter()
+            .find(|apple| apple.bounds.contains_point(x, y))
+            .map(|apple| apple.bounds.draw_pixel(x, y));
 
-        let rgba = if inside_the_player {
-            [0x5e, 0x48, 0xe8, 0xff]
-        }
-        // else if inside_the_enemy {
-        //     [0xff, 0x00, 0x00, 0xff]
-        // }
-        else if inside_apple {
-            [0xff, 0x00, 0x00, 0xff]
+        if player.bounds.contains_point(x, y) {
+            let player_pixel = player.bounds.draw_pixel(x, y);
+            pixel.copy_from_slice(&player_pixel);
+        } else if let Some(apple_pixel) = apple_pixel {
+            pixel.copy_from_slice(&apple_pixel);
         } else {
-            [0x00, 0x00, 0x00, 0xff]
-        };
-
-        pixel.copy_from_slice(&rgba);
+            pixel.copy_from_slice(&[0x00, 0x00, 0x00, 0xff]);
+        }
     }
 
     pub fn set_player(&mut self, player: Player) {
