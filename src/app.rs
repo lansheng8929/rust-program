@@ -56,7 +56,7 @@ impl ApplicationHandler for App {
         self.pixels = Some(Pixels::new(WIDTH, HEIGHT, surface_texture).unwrap());
 
         let mut world = World::new(WIDTH, HEIGHT);
-        world.set_player(Player::new(10, 10, HEIGHT as i32 - 10, 3));
+        world.set_player(Player::new(20, 10, HEIGHT as i32 - 10, 3));
         // world.set_enemy(Enemy::new(10, 10, 10, 10));
         self.world = Some(world);
 
