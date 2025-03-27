@@ -52,6 +52,26 @@ impl World {
             }
         }
 
+        // 检查子弹和敌人的碰撞
+        let mut enemies_to_remove = Vec::new();
+        for (bullet_idx, bullet) in self.bullets.iter().enumerate() {
+            if bullet.owner == BulletOwner::Player {
+                for (enemy_idx, enemy) in self.enemies.iter().enumerate() {
+                    if bullet.bounds.is_overlapping(&enemy.bounds) {
+                        bullets_to_remove.push(bullet_idx);
+                        enemies_to_remove.push(enemy_idx);
+                        game_data.score += 1;
+                        self.sound_manager.play_sound(&SoundEffect::Collect);
+                    }
+                }
+            }
+        }
+
+        // 移除被击中的敌人
+        for &i in enemies_to_remove.iter().rev() {
+            self.enemies.remove(i);
+        }
+
         // 移除出界的子弹
         for &i in bullets_to_remove.iter().rev() {
             self.bullets.remove(i);
@@ -110,7 +130,7 @@ impl World {
         let mut rng = rand::thread_rng();
         for _ in 0..count {
             let x = rng.gen_range(0..self.width) as i32;
-            let y = rng.gen_range(0..self.height / 2) as i32; // 在上半部分生成敌人
+            let y = 0 as i32;
             let enemy = Enemy::new(20, x, y, 2.0);
             self.enemies.push(enemy);
         }

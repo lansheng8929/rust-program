@@ -16,8 +16,8 @@ pub struct Bullet {
 
 impl Bullet {
     pub fn new(x: i32, y: i32, speed: f32, direction: f32, owner: BulletOwner) -> Self {
-        let bounds = Rectangle::new(x, y, 10, 4) // 长方形子弹
-            .with_angle(direction);
+        let mut bounds = Rectangle::new(x, y, 4, 10); // 长方形子弹
+        bounds.set_angle(direction);
 
         Self {
             bounds,

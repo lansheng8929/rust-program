@@ -17,7 +17,7 @@ impl Default for Enemy {
 impl Enemy {
     pub fn new(size: u32, x: i32, y: i32, speed: f32) -> Self {
         let mut bounds = Rectangle::new(x, y, size, size);
-        bounds.load_texture("assets/enemy.png");
+        bounds.load_texture("enemy.png");
 
         Self { bounds, speed }
     }

@@ -47,16 +47,16 @@ impl Rectangle {
                     image::imageops::FilterType::Nearest,
                 );
                 self.texture = Some(resized.to_rgba8());
-            } else {
-                println!("Failed to decode texture from memory");
-
-                let mut texture = ImageBuffer::new(self.width, self.height);
-                // 填充紫色 (R:255, G:0, B:255, A:255)
-                for pixel in texture.pixels_mut() {
-                    *pixel = image::Rgba([255, 0, 255, 255]);
-                }
-                self.texture = Some(texture);
             }
+        } else {
+            println!("Failed to load texture from path: {}", path);
+
+            let mut texture = ImageBuffer::new(self.width, self.height);
+            // 填充紫色 (R:255, G:0, B:255, A:255)
+            for pixel in texture.pixels_mut() {
+                *pixel = image::Rgba([255, 0, 255, 255]);
+            }
+            self.texture = Some(texture);
         }
     }
 
@@ -95,8 +95,7 @@ impl Rectangle {
             && point_y < self.y + self.height as i32
     }
 
-    pub fn with_angle(mut self, angle: f32) -> Self {
+    pub fn set_angle(&mut self, angle: f32) {
         self.angle = angle;
-        self
     }
 }
