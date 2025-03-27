@@ -4,6 +4,8 @@ use std::fs::File;
 use std::io::BufReader;
 use std::sync::Arc;
 
+use crate::Assets;
+
 #[derive(Hash, Eq, PartialEq, Clone)]
 pub enum SoundEffect {
     Background,
@@ -40,16 +42,10 @@ impl SoundManager {
         let mut sound_map = HashMap::new();
         sound_map.insert(
             SoundEffect::Background,
-            String::from("assets/sounds/background.wav"),
+            String::from("sounds/background.wav"),
         );
-        sound_map.insert(
-            SoundEffect::Collect,
-            String::from("assets/sounds/collect.wav"),
-        );
-        sound_map.insert(
-            SoundEffect::GameOver,
-            String::from("assets/sounds/gameover.wav"),
-        );
+        sound_map.insert(SoundEffect::Collect, String::from("sounds/collect.wav"));
+        sound_map.insert(SoundEffect::GameOver, String::from("sounds/gameover.wav"));
 
         Self {
             sound_map,
@@ -71,21 +67,20 @@ impl SoundManager {
 
         if let Some(stream_handle) = &self.stream_handle {
             match Sink::try_new(&stream_handle) {
-                Ok(sink) => match File::open(path) {
-                    Ok(file) => {
-                        let buf_reader = BufReader::new(file);
-                        match Decoder::new(buf_reader) {
-                            Ok(source) => {
-                                sink.set_volume(self.volume);
-                                sink.append(source);
-                                sink.detach();
-                                Ok(())
-                            }
-                            Err(e) => Err(format!("Failed to decode audio: {}", e)),
+                Ok(sink) => {
+                    let file_content = Assets::get(path)
+                        .ok_or_else(|| format!("Failed to load embedded sound file: {}", path))?;
+                    let cursor = std::io::Cursor::new(file_content.data);
+                    match Decoder::new(cursor) {
+                        Ok(source) => {
+                            sink.set_volume(self.volume);
+                            sink.append(source);
+                            sink.detach();
+                            Ok(())
                         }
+                        Err(e) => Err(format!("Failed to decode audio: {}", e)),
                     }
-                    Err(e) => Err(format!("Failed to open sound file: {}", e)),
-                },
+                }
                 Err(e) => Err(format!("Failed to create audio sink: {}", e)),
             }
         } else {
