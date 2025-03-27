@@ -1,7 +1,9 @@
 #![deny(clippy::all)]
 #![forbid(unsafe_code)]
+#![windows_subsystem = "windows"]
 
 use app::App;
+use rust_embed::RustEmbed;
 use winit::event_loop::{ControlFlow, EventLoop};
 
 mod app;
@@ -16,6 +18,10 @@ mod rectangle;
 mod sound;
 mod uitils;
 mod world;
+
+#[derive(RustEmbed)]
+#[folder = "assets/"]
+struct Assets;
 
 const WIDTH: u32 = 300;
 const HEIGHT: u32 = 300;

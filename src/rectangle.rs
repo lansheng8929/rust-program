@@ -1,5 +1,7 @@
 use image::{DynamicImage, RgbaImage};
 
+use crate::Assets;
+
 #[derive(Debug, Clone)]
 pub struct Rectangle {
     pub x: i32,
@@ -21,8 +23,8 @@ impl Rectangle {
     }
 
     pub fn load_texture(&mut self, path: &str) {
-        match image::open(path) {
-            Ok(img) => {
+        if let Some(file) = Assets::get(path) {
+            if let Ok(img) = image::load_from_memory(&file.data) {
                 // 将图片调整为rectangle的大小
                 let resized = img.resize_exact(
                     self.width,
@@ -30,8 +32,11 @@ impl Rectangle {
                     image::imageops::FilterType::Nearest,
                 );
                 self.texture = Some(resized.to_rgba8());
+            } else {
+                println!("Failed to decode texture from memory");
             }
-            Err(e) => println!("Failed to load texture: {}", e),
+        } else {
+            println!("Failed to load texture: file not found");
         }
     }
 
