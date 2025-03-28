@@ -47,7 +47,9 @@ impl Rectangle {
 
     pub fn load_texture(&mut self, path: &str) {
         if let Some(file) = Assets::get(path) {
-            if let Ok(img) = image::load_from_memory(&file.data) {
+            if let Ok(img) =
+                image::load_from_memory_with_format(&file.data, image::ImageFormat::Png)
+            {
                 // 将图片调整为rectangle的大小
                 let resized = img.resize_exact(
                     self.width,
@@ -81,6 +83,12 @@ impl Rectangle {
             {
                 // 获取纹理中对应位置的像素
                 let pixel = texture.get_pixel(rel_x as u32, rel_y as u32);
+
+                // 如果像素完全透明，返回完全透明的像素
+                if pixel.0[3] == 0 {
+                    return [0, 0, 0, 0];
+                }
+
                 return pixel.0;
             }
         }
