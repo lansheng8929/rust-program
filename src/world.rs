@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use rand::Rng;
 
 use crate::{
@@ -33,52 +35,66 @@ impl World {
         let player = self.player.as_mut().unwrap();
         player.update(self.width, self.height);
 
+        // 使用 HashSet 来存储要移除的索引，避免重复
+        let mut bullets_to_remove = HashSet::new();
+        let mut enemies_to_remove = HashSet::new();
+
         // 更新所有敌人
-        for enemy in self.enemies.iter_mut() {
+        for (enemy_idx, enemy) in self.enemies.iter_mut().enumerate() {
             enemy.update(self.width, self.height);
-        }
 
-        // 处理玩家射击
-        if let Some(new_bullet) = player.try_shoot() {
-            self.bullets.push(new_bullet);
-        }
-
-        // 更新所有子弹
-        let mut bullets_to_remove = Vec::new();
-        for (i, bullet) in self.bullets.iter_mut().enumerate() {
-            bullet.update();
-            if bullet.is_out_of_bounds(self.width, self.height) {
-                bullets_to_remove.push(i);
+            // 检查出界
+            if enemy.bounds.is_out_of_bounds(self.width, self.height) {
+                enemies_to_remove.insert(enemy_idx);
+                continue;
             }
         }
 
-        // 检查子弹和敌人的碰撞
-        let mut enemies_to_remove = Vec::new();
-        for (bullet_idx, bullet) in self.bullets.iter().enumerate() {
+        // 处理玩家射击 - 传入敌人引用
+        if let Some(new_bullet) = player.try_shoot(&self.enemies) {
+            self.bullets.push(new_bullet);
+        }
+
+        // 更新子弹并检查碰撞
+        for (bullet_idx, bullet) in self.bullets.iter_mut().enumerate() {
+            bullet.update();
+
+            // 检查出界
+            if bullet.bounds.is_out_of_bounds(self.width, self.height) {
+                bullets_to_remove.insert(bullet_idx);
+                continue; // 出界的子弹不需要再检查碰撞
+            }
+
+            // 检查碰撞
             if bullet.owner == BulletOwner::Player {
                 for (enemy_idx, enemy) in self.enemies.iter().enumerate() {
                     if bullet.bounds.is_overlapping(&enemy.bounds) {
-                        bullets_to_remove.push(bullet_idx);
-                        enemies_to_remove.push(enemy_idx);
+                        bullets_to_remove.insert(bullet_idx);
+                        enemies_to_remove.insert(enemy_idx);
                         game_data.score += 1;
                         self.sound_manager.play_sound(&SoundEffect::Collect);
+                        break; // 一颗子弹只能击中一个敌人
                     }
                 }
             }
         }
 
-        // 移除被击中的敌人
-        for &i in enemies_to_remove.iter().rev() {
-            self.enemies.remove(i);
-        }
+        // 按照索引从大到小的顺序移除，避免索引失效
+        let mut bullets_to_remove: Vec<_> = bullets_to_remove.into_iter().collect();
+        let mut enemies_to_remove: Vec<_> = enemies_to_remove.into_iter().collect();
+        bullets_to_remove.sort_by(|a, b| b.cmp(a));
+        enemies_to_remove.sort_by(|a, b| b.cmp(a));
 
-        // 移除出界的子弹
-        for &i in bullets_to_remove.iter().rev() {
-            self.bullets.remove(i);
+        // 移除元素
+        for &idx in &bullets_to_remove {
+            self.bullets.remove(idx);
+        }
+        for &idx in &enemies_to_remove {
+            self.enemies.remove(idx);
         }
     }
 
-    pub fn draw(&self, pixel: &mut [u8], x: i32, y: i32) {
+    pub fn draw(&self, pixel: &mut [u8], x: f32, y: f32) {
         let player = self.player.as_ref().unwrap();
 
         // 绘制子弹
@@ -129,9 +145,9 @@ impl World {
     pub fn spawn_enemies(&mut self, count: u32) {
         let mut rng = rand::thread_rng();
         for _ in 0..count {
-            let x = rng.gen_range(0..self.width) as i32;
-            let y = 0 as i32;
-            let enemy = Enemy::new(20, x, y, 2.0);
+            let x = rng.gen_range(0..self.width) as f32;
+            let y = 0 as f32;
+            let enemy = Enemy::new(20, x, y, 1.0);
             self.enemies.push(enemy);
         }
     }

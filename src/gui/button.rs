@@ -9,7 +9,7 @@ pub struct Button {
 }
 
 impl Button {
-    pub fn new(x: i32, y: i32, width: u32, height: u32, label: String) -> Self {
+    pub fn new(x: f32, y: f32, width: u32, height: u32, label: String) -> Self {
         Self {
             bounds: Rectangle::new(x, y, width, height),
             label,
@@ -22,9 +22,9 @@ impl Button {
         // 渲染按钮
         for i in 0..self.bounds.width {
             for j in 0..self.bounds.height {
-                let x = self.bounds.x + i as i32;
-                let y = self.bounds.y + j as i32;
-                if x >= 0 && x < width as i32 && y >= 0 && y < height as i32 {
+                let x = self.bounds.x + i as f32;
+                let y = self.bounds.y + j as f32;
+                if x >= 0.0 && x < width as f32 && y >= 0.0 && y < height as f32 {
                     let index = (y as usize * width + x as usize) * 4;
                     if self.is_pressed {
                         frame[index..index + 4].copy_from_slice(&[255, 0, 0, 255]); // 红色
@@ -44,9 +44,9 @@ impl Button {
     ) {
         let (x, y) = cursor_state.position;
         if x >= self.bounds.x
-            && x < self.bounds.x + self.bounds.width as i32
+            && x < self.bounds.x + self.bounds.width as f32
             && y >= self.bounds.y
-            && y < self.bounds.y + self.bounds.height as i32
+            && y < self.bounds.y + self.bounds.height as f32
         {
             if button == &MouseButton::Left && state == &ElementState::Pressed {
                 self.is_pressed = true;

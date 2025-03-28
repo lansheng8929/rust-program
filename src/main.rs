@@ -23,8 +23,8 @@ mod world;
 #[folder = "assets/"]
 struct Assets;
 
-const WIDTH: u32 = 300;
-const HEIGHT: u32 = 300;
+static WIDTH: u32 = 300;
+static HEIGHT: u32 = 300;
 
 fn main() {
     let event_loop = EventLoop::new().unwrap();

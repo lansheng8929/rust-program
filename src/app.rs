@@ -55,7 +55,7 @@ impl ApplicationHandler for App {
         self.pixels = Some(Pixels::new(WIDTH, HEIGHT, surface_texture).unwrap());
 
         let mut world = World::new(WIDTH, HEIGHT);
-        world.set_player(Player::new(20, 10, HEIGHT as i32 - 10, 3.0));
+        world.set_player(Player::new(20, 10.0, HEIGHT as f32 - 10.0, 3.0));
         // world.set_enemy(Enemy::new(10, 10, 10, 10));
         self.world = Some(world);
 
@@ -83,8 +83,8 @@ impl ApplicationHandler for App {
                 let scale_y = HEIGHT as f64 / window_size.height as f64;
 
                 // 转换坐标
-                let pixels_x = (position.x * scale_x) as i32;
-                let pixels_y = (position.y * scale_y) as i32;
+                let pixels_x = (position.x * scale_x) as f32;
+                let pixels_y = (position.y * scale_y) as f32;
 
                 cursor_state.position = (pixels_x, pixels_y);
             }
@@ -139,8 +139,8 @@ impl ApplicationHandler for App {
 
                 let frame = pixels.frame_mut();
                 for (i, pixel) in frame.chunks_exact_mut(4).enumerate() {
-                    let x = (i % WIDTH as usize) as i32;
-                    let y = (i / HEIGHT as usize) as i32;
+                    let x = (i % WIDTH as usize) as f32;
+                    let y = (i / HEIGHT as usize) as f32;
 
                     world.draw(pixel, x, y);
                     gui.draw(pixel, x, y);

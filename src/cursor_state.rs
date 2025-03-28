@@ -1,10 +1,12 @@
 #[derive(Default)]
 pub struct CursorState {
-    pub position: (i32, i32),
+    pub position: (f32, f32),
 }
 
 impl CursorState {
     pub fn new() -> Self {
-        Self { position: (0, 0) }
+        Self {
+            position: (0.0, 0.0),
+        }
     }
 }

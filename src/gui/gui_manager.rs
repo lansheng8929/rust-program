@@ -14,7 +14,7 @@ pub struct GuiManager {
 impl GuiManager {
     pub fn new() -> Self {
         Self {
-            label: Label::new(WIDTH as i32 / 2, 10, 50, 20),
+            label: Label::new(WIDTH as f32 / 2.0, 10.0, 50, 20),
         }
     }
 
@@ -22,7 +22,7 @@ impl GuiManager {
         self.label.set_label(game_data.score.to_string());
     }
 
-    pub fn draw(&self, pixel: &mut [u8], x: i32, y: i32) {
+    pub fn draw(&self, pixel: &mut [u8], x: f32, y: f32) {
         self.label.draw(pixel, x, y);
     }
 }
