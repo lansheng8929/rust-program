@@ -1,19 +1,20 @@
-use pixels::{Pixels, SurfaceTexture};
+use pixels::wgpu::RequestAdapterOptions;
+use pixels::{ Pixels, SurfaceTexture };
 use rand::Rng;
 use winit::application::ApplicationHandler;
 use winit::dpi::LogicalSize;
 use winit::event::WindowEvent;
 use winit::event_loop::ActiveEventLoop;
-use winit::keyboard::{KeyCode, PhysicalKey};
-use winit::window::{Window, WindowId};
+use winit::keyboard::{ KeyCode, PhysicalKey };
+use winit::window::{ Window, WindowId };
 
 use crate::cursor_state::CursorState;
 use crate::enemy::Enemy;
 use crate::game_data::GameData;
-use crate::gui::{Button, GuiManager, Label};
+use crate::gui::{ Button, GuiManager, Label };
 use crate::player::Player;
 use crate::world::World;
-use crate::{HEIGHT, WIDTH};
+use crate::{ HEIGHT, WIDTH };
 
 pub struct App {
     frame_count: u32,
@@ -47,15 +48,25 @@ impl ApplicationHandler for App {
                 Window::default_attributes()
                     .with_inner_size(size)
                     .with_min_inner_size(size)
-                    .with_max_inner_size(size),
+                    .with_max_inner_size(size)
             )
             .unwrap();
         let window_size = window.inner_size();
         let surface_texture = SurfaceTexture::new(window_size.width, window_size.height, &window);
-        self.pixels = Some(Pixels::new(WIDTH, HEIGHT, surface_texture).unwrap());
+        self.pixels = Some(
+            pixels::PixelsBuilder
+                ::new(WIDTH, HEIGHT, surface_texture)
+                .request_adapter_options(RequestAdapterOptions {
+                    compatible_surface: None,
+                    power_preference: pixels::wgpu::PowerPreference::HighPerformance,
+                    force_fallback_adapter: false,
+                })
+                .build()
+                .unwrap()
+        );
 
         let mut world = World::new(WIDTH, HEIGHT);
-        world.set_player(Player::new(20, 10.0, HEIGHT as f32 - 10.0, 3.0));
+        world.set_player(Player::new(20, 10.0, (HEIGHT as f32) - 10.0, 3.0));
         // world.set_enemy(Enemy::new(10, 10, 10, 10));
         self.world = Some(world);
 
@@ -79,8 +90,8 @@ impl ApplicationHandler for App {
                 let window_size = window.inner_size();
 
                 // 计算缩放比例
-                let scale_x = WIDTH as f64 / window_size.width as f64;
-                let scale_y = HEIGHT as f64 / window_size.height as f64;
+                let scale_x = (WIDTH as f64) / (window_size.width as f64);
+                let scale_y = (HEIGHT as f64) / (window_size.height as f64);
 
                 // 转换坐标
                 let pixels_x = (position.x * scale_x) as f32;
@@ -88,18 +99,10 @@ impl ApplicationHandler for App {
 
                 cursor_state.position = (pixels_x, pixels_y);
             }
-            WindowEvent::MouseInput {
-                device_id: _,
-                state: _,
-                button: _,
-            } => {
+            WindowEvent::MouseInput { device_id: _, state: _, button: _ } => {
                 // gui.handle_event(&button, &state, &cursor_state);
             }
-            WindowEvent::KeyboardInput {
-                device_id: _,
-                event,
-                is_synthetic: _,
-            } => {
+            WindowEvent::KeyboardInput { device_id: _, event, is_synthetic: _ } => {
                 let pressed = event.state.is_pressed();
                 if let PhysicalKey::Code(key) = event.physical_key {
                     if key == KeyCode::Escape {
@@ -139,8 +142,8 @@ impl ApplicationHandler for App {
 
                 let frame = pixels.frame_mut();
                 for (i, pixel) in frame.chunks_exact_mut(4).enumerate() {
-                    let x = (i % WIDTH as usize) as f32;
-                    let y = (i / HEIGHT as usize) as f32;
+                    let x = (i % (WIDTH as usize)) as f32;
+                    let y = (i / (HEIGHT as usize)) as f32;
 
                     world.draw(pixel, x, y);
                     gui.draw(pixel, x, y);
