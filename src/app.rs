@@ -1,20 +1,20 @@
 use pixels::wgpu::RequestAdapterOptions;
-use pixels::{ Pixels, SurfaceTexture };
+use pixels::{Pixels, SurfaceTexture};
 use rand::Rng;
 use winit::application::ApplicationHandler;
 use winit::dpi::LogicalSize;
 use winit::event::WindowEvent;
 use winit::event_loop::ActiveEventLoop;
-use winit::keyboard::{ KeyCode, PhysicalKey };
-use winit::window::{ Window, WindowId };
+use winit::keyboard::{KeyCode, PhysicalKey};
+use winit::window::{Window, WindowId};
 
 use crate::cursor_state::CursorState;
 use crate::enemy::Enemy;
 use crate::game_data::GameData;
-use crate::gui::{ Button, GuiManager, Label };
+use crate::gui::{GuiManager, Label};
 use crate::player::Player;
 use crate::world::World;
-use crate::{ HEIGHT, WIDTH };
+use crate::{HEIGHT, WIDTH};
 
 pub struct App {
     frame_count: u32,
@@ -48,21 +48,20 @@ impl ApplicationHandler for App {
                 Window::default_attributes()
                     .with_inner_size(size)
                     .with_min_inner_size(size)
-                    .with_max_inner_size(size)
+                    .with_max_inner_size(size),
             )
             .unwrap();
         let window_size = window.inner_size();
         let surface_texture = SurfaceTexture::new(window_size.width, window_size.height, &window);
         self.pixels = Some(
-            pixels::PixelsBuilder
-                ::new(WIDTH, HEIGHT, surface_texture)
+            pixels::PixelsBuilder::new(WIDTH, HEIGHT, surface_texture)
                 .request_adapter_options(RequestAdapterOptions {
                     compatible_surface: None,
                     power_preference: pixels::wgpu::PowerPreference::HighPerformance,
                     force_fallback_adapter: false,
                 })
                 .build()
-                .unwrap()
+                .unwrap(),
         );
 
         let mut world = World::new(WIDTH, HEIGHT);
@@ -99,10 +98,18 @@ impl ApplicationHandler for App {
 
                 cursor_state.position = (pixels_x, pixels_y);
             }
-            WindowEvent::MouseInput { device_id: _, state: _, button: _ } => {
+            WindowEvent::MouseInput {
+                device_id: _,
+                state: _,
+                button: _,
+            } => {
                 // gui.handle_event(&button, &state, &cursor_state);
             }
-            WindowEvent::KeyboardInput { device_id: _, event, is_synthetic: _ } => {
+            WindowEvent::KeyboardInput {
+                device_id: _,
+                event,
+                is_synthetic: _,
+            } => {
                 let pressed = event.state.is_pressed();
                 if let PhysicalKey::Code(key) = event.physical_key {
                     if key == KeyCode::Escape {
@@ -129,9 +136,9 @@ impl ApplicationHandler for App {
                 self.frame_count = (self.frame_count + 1) % u32::MAX;
 
                 // 每隔一段时间生成新的敌人
-                if self.frame_count % 300 == 0 {
+                if self.frame_count % 100 == 0 {
                     // 每300帧生成新敌人
-                    if world.enemies.len() < 10 {
+                    if world.enemies.len() < 100 {
                         // 限制最大敌人数量
                         world.spawn_enemies(2);
                     }

@@ -10,8 +10,16 @@ use crate::{
     uitils::constrain_to_bounds,
 };
 
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub enum PlayerState {
+    Idle,
+    Moving,
+    Jumping,
+    Shooting,
+}
+
 pub struct Player {
-    pub bounds: Rectangle,
+    pub bounds: Rectangle<PlayerState>,
     speed: f32,
     input_state: InputState,
     shoot_cooldown: u32,
@@ -31,7 +39,14 @@ impl Default for Player {
 impl Player {
     pub fn new(size: u32, x: f32, y: f32, speed: f32) -> Self {
         let mut bounds = Rectangle::new(x, y, size, size);
-        bounds.load_texture("player.png");
+
+        bounds
+            .animation
+            .load_state(PlayerState::Moving, "player_moving", 1);
+
+        // 设置初始状态
+        bounds.animation.set_state(PlayerState::Moving);
+        bounds.animation.set_speed(10);
 
         Self {
             bounds,
@@ -54,10 +69,6 @@ impl Player {
         self.bounds.y = y_constrained;
     }
 
-    pub fn draw(&self, x: f32, y: f32) -> bool {
-        self.bounds.contains_point(x, y)
-    }
-
     pub fn input(&mut self, key_code: KeyCode, pressed: bool) {
         self.input_state.handle_key_state(key_code, pressed);
     }
@@ -78,7 +89,9 @@ impl Player {
     }
 
     pub fn try_shoot(&mut self, enemies: &[Enemy]) -> Option<Bullet> {
-        if self.input_state.shoot_pressed && self.shoot_cooldown == 0 {
+        if
+        // self.input_state.shoot_pressed &&
+        self.shoot_cooldown == 0 {
             self.shoot_cooldown = 10;
 
             // 计算子弹的起始位置（从玩家中心发射）
@@ -106,9 +119,10 @@ impl Player {
             Some(Bullet::new(
                 bullet_start_x,
                 bullet_start_y,
-                5.0,
+                10.0,
                 target_angle,
                 BulletOwner::Player,
+                20.0, // 设置子弹伤害值
             ))
         } else {
             if self.shoot_cooldown > 0 {

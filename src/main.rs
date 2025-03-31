@@ -6,6 +6,7 @@ use app::App;
 use rust_embed::RustEmbed;
 use winit::event_loop::{ControlFlow, EventLoop};
 
+mod animation;
 mod app;
 mod bullet;
 mod cursor_state;

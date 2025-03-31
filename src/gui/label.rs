@@ -3,28 +3,34 @@ use crate::{gui::font8x8::FONT8X8, rectangle::Rectangle};
 const FONT_8X8: [[u8; 8]; 128] = FONT8X8;
 
 pub struct Label {
-    pub bounds: Rectangle,
+    x: f32,
+    y: f32,
+    width: u32,
+    height: u32,
     pub label: Option<String>,
 }
 
 impl Label {
     pub fn new(x: f32, y: f32, width: u32, height: u32) -> Self {
         Self {
-            bounds: Rectangle::new(x, y, width, height),
+            x,
+            y,
+            width,
+            height,
             label: None,
         }
     }
 }
 impl Label {
     pub fn draw(&self, pixel: &mut [u8], x: f32, y: f32) {
-        if x >= self.bounds.x
-            && x < self.bounds.x + self.bounds.width as f32
-            && y >= self.bounds.y
-            && y < self.bounds.y + self.bounds.height as f32
+        if x >= self.x
+            && x < self.x + self.width as f32
+            && y >= self.y
+            && y < self.y + self.height as f32
         {
             let label = self.label.as_ref().unwrap();
-            let text_x = x - self.bounds.x;
-            let text_y = y - self.bounds.y;
+            let text_x = x - self.x;
+            let text_y = y - self.y;
 
             if text_y >= 0.0 && text_y < 8.0 && text_x < (label.len() * 8) as f32 {
                 let char_index = text_x / 8.0;

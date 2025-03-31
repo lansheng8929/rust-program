@@ -1,5 +1,10 @@
 use crate::rectangle::Rectangle;
 
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub enum BulletState {
+    Shooting,
+}
+
 #[derive(Debug, PartialEq)]
 pub enum BulletOwner {
     Player,
@@ -8,15 +13,23 @@ pub enum BulletOwner {
 
 #[derive(Debug)]
 pub struct Bullet {
-    pub bounds: Rectangle,
+    pub bounds: Rectangle<BulletState>,
     pub speed: f32,
     pub direction: f32,     // 弧度
     pub owner: BulletOwner, // 子弹所有者标识
+    pub damage: f32,        // 添加伤害值
 }
 
 impl Bullet {
-    pub fn new(x: f32, y: f32, speed: f32, direction: f32, owner: BulletOwner) -> Self {
-        let mut bounds = Rectangle::new(x, y, 4, 10); // 长方形子弹
+    pub fn new(
+        x: f32,
+        y: f32,
+        speed: f32,
+        direction: f32,
+        owner: BulletOwner,
+        damage: f32,
+    ) -> Self {
+        let mut bounds = Rectangle::new(x, y, 4, 10);
         bounds.set_angle(direction);
 
         Self {
@@ -24,6 +37,7 @@ impl Bullet {
             speed,
             direction,
             owner,
+            damage,
         }
     }
 

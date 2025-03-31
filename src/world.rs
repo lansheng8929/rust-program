@@ -67,12 +67,18 @@ impl World {
 
             // 检查碰撞
             if bullet.owner == BulletOwner::Player {
-                for (enemy_idx, enemy) in self.enemies.iter().enumerate() {
+                for (enemy_idx, enemy) in self.enemies.iter_mut().enumerate() {
                     if bullet.bounds.is_overlapping(&enemy.bounds) {
                         bullets_to_remove.insert(bullet_idx);
-                        enemies_to_remove.insert(enemy_idx);
-                        game_data.score += 1;
-                        self.sound_manager.play_sound(&SoundEffect::Collect);
+
+                        // 对敌人造成伤害
+                        if enemy.take_damage(bullet.damage) {
+                            // 如果敌人死亡
+                            enemies_to_remove.insert(enemy_idx);
+                            game_data.score += 1;
+                            self.sound_manager.play_sound(&SoundEffect::Collect);
+                        }
+
                         break; // 一颗子弹只能击中一个敌人
                     }
                 }
@@ -100,8 +106,14 @@ impl World {
         // 2. 绘制敌人
         for enemy in &self.enemies {
             if enemy.bounds.contains_point(x, y) {
-                let enemy_pixel = enemy.bounds.draw_pixel(x, y);
+                let mut enemy_pixel = enemy.bounds.draw(x, y);
                 if enemy_pixel[3] > 0 {
+                    // 根据血量调整颜色
+                    let health_ratio = enemy.health / enemy.max_health;
+                    enemy_pixel[0] = (enemy_pixel[0] as f32 * health_ratio) as u8;
+                    enemy_pixel[1] = (enemy_pixel[1] as f32 * health_ratio) as u8;
+                    enemy_pixel[2] = (enemy_pixel[2] as f32 * health_ratio) as u8;
+
                     // 如果当前像素不是完全透明的，进行 alpha 混合
                     if final_pixel[3] == 0 {
                         // 如果背景是完全透明的，直接使用新像素
@@ -127,7 +139,7 @@ impl World {
         // 3. 绘制玩家
         let player = self.player.as_ref().unwrap();
         if player.bounds.contains_point(x, y) {
-            let player_pixel = player.bounds.draw_pixel(x, y);
+            let player_pixel = player.bounds.draw(x, y);
             if player_pixel[3] > 0 {
                 // 只有当像素不完全透明时才更新
                 final_pixel = player_pixel;
@@ -168,7 +180,7 @@ impl World {
         for _ in 0..count {
             let x = rng.gen_range(0..self.width) as f32;
             let y = 0 as f32;
-            let enemy = Enemy::new(20, x, y, 1.0);
+            let enemy = Enemy::new(20, x, y, 0.5);
             self.enemies.push(enemy);
         }
     }
