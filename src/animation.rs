@@ -2,7 +2,10 @@ use image::{ImageBuffer, RgbaImage};
 use std::collections::HashMap;
 use std::hash::Hash;
 
-use crate::Assets;
+use crate::{
+    Assets,
+    rectangle::{self, Rectangle},
+};
 
 #[derive(Debug, Clone)]
 pub struct AnimationController<S: Clone + Eq + Hash> {
@@ -34,24 +37,45 @@ impl<S: Clone + Eq + Hash> AnimationController<S> {
     /// - state: 动画状态
     /// - base_path: 帧图片的基础路径
     /// - frame_count: 帧数量
-    pub fn load_state(&mut self, state: S, base_path: &str, frame_count: usize) {
+    pub fn load_state(
+        &mut self,
+        width: u32,
+        height: u32,
+        state: S,
+        base_path: &str,
+        frame_count: usize,
+    ) {
         let mut frames = Vec::new();
 
         for i in 0..frame_count {
             let path = format!("{}_{}.png", base_path, i);
+            println!("{}", path);
             if let Some(file) = Assets::get(&path) {
                 if let Ok(img) =
                     image::load_from_memory_with_format(&file.data, image::ImageFormat::Png)
                 {
-                    frames.push(img.to_rgba8());
+                    let mut rgba_img = img.to_rgba8();
+                    // 如果图片尺寸与矩形不匹配，进行缩放
+                    if rgba_img.width() != width || rgba_img.height() != height {
+                        rgba_img = image::imageops::resize(
+                            &rgba_img,
+                            width,
+                            height,
+                            image::imageops::FilterType::Nearest,
+                        );
+                    }
+                    frames.push(rgba_img);
                 }
             }
         }
 
         if frames.is_empty() {
-            let texture = ImageBuffer::from_fn(1, 1, |_, _| image::Rgba([255, 0, 255, 255]));
+            let texture =
+                ImageBuffer::from_fn(width, height, |_, _| image::Rgba([255, 0, 255, 255]));
             frames.push(texture);
         }
+
+        println!("{}", frames.len());
 
         self.states.insert(state, frames);
     }

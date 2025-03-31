@@ -136,11 +136,13 @@ impl ApplicationHandler for App {
                 self.frame_count = (self.frame_count + 1) % u32::MAX;
 
                 // 每隔一段时间生成新的敌人
-                if self.frame_count % 100 == 0 {
+                let mut rng = rand::thread_rng();
+                if self.frame_count % rng.gen_range(100..300) == 0 {
                     // 每300帧生成新敌人
                     if world.enemies.len() < 100 {
                         // 限制最大敌人数量
-                        world.spawn_enemies(2);
+
+                        world.spawn_enemies(rng.gen_range(2..5));
                     }
                 }
 

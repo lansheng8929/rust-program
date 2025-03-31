@@ -28,9 +28,7 @@ impl Default for Enemy {
 impl Enemy {
     pub fn new(size: u32, x: f32, y: f32, speed: f32) -> Self {
         let mut bounds = Rectangle::new(x, y, size, size);
-        bounds
-            .animation
-            .load_state(EnemyState::Moving, "enemy_moving", 1);
+        bounds.load_animation_state(EnemyState::Moving, "enemy_moving", 4);
 
         // 设置初始状态
         bounds.animation.set_state(EnemyState::Moving);
@@ -44,7 +42,7 @@ impl Enemy {
         }
     }
 
-    pub fn update(&mut self, width: u32, height: u32) {
+    pub fn update(&mut self) {
         self.bounds.y = (self.bounds.y as f32 + self.speed) as f32;
 
         // 更新动画

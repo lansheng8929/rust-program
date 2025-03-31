@@ -41,7 +41,7 @@ impl World {
 
         // 更新所有敌人
         for (enemy_idx, enemy) in self.enemies.iter_mut().enumerate() {
-            enemy.update(self.width, self.height);
+            enemy.update();
 
             // 检查出界
             if enemy.bounds.is_out_of_bounds(self.width, self.height) {
@@ -179,7 +179,7 @@ impl World {
         let mut rng = rand::thread_rng();
         for _ in 0..count {
             let x = rng.gen_range(0..self.width) as f32;
-            let y = 0 as f32;
+            let y = 0.0;
             let enemy = Enemy::new(20, x, y, 0.5);
             self.enemies.push(enemy);
         }

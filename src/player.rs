@@ -40,9 +40,7 @@ impl Player {
     pub fn new(size: u32, x: f32, y: f32, speed: f32) -> Self {
         let mut bounds = Rectangle::new(x, y, size, size);
 
-        bounds
-            .animation
-            .load_state(PlayerState::Moving, "player_moving", 1);
+        bounds.load_animation_state(PlayerState::Moving, "player_moving", 1);
 
         // 设置初始状态
         bounds.animation.set_state(PlayerState::Moving);

@@ -59,7 +59,14 @@ impl<S: Clone + Eq + Hash> Rectangle<S> {
         let rel_y = y - self.y;
 
         if rel_x >= 0.0 && rel_y >= 0.0 && rel_x < self.width as f32 && rel_y < self.height as f32 {
+            print!("Drawing rectangle at ({}, {})", rel_x, rel_y);
             if let Some(texture) = self.animation.get_current_frame() {
+                let tex_width = texture.width();
+                let tex_height = texture.height();
+
+                if rel_x >= tex_width as f32 || rel_y >= tex_height as f32 {
+                    return [0, 0, 0, 0];
+                }
                 let pixel = texture.get_pixel(rel_x as u32, rel_y as u32);
                 if pixel.0[3] == 0 {
                     return [0, 0, 0, 0];
@@ -156,5 +163,10 @@ impl<S: Clone + Eq + Hash> Rectangle<S> {
         self.angle = fixed_angle;
         self.cos_angle = fixed_angle.cos();
         self.sin_angle = fixed_angle.sin();
+    }
+
+    pub fn load_animation_state(&mut self, state: S, base_path: &str, frame_count: usize) {
+        self.animation
+            .load_state(self.width, self.height, state, base_path, frame_count);
     }
 }
