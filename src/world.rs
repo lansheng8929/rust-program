@@ -1,13 +1,13 @@
-use std::collections::HashSet;
-
 use rand::Rng;
+use std::collections::HashSet;
 
 use crate::{
     bullet::{Bullet, BulletOwner},
     enemy::Enemy,
-    game_data::{self, GameData},
+    game_data::GameData,
     player::Player,
     sound::{SoundEffect, SoundManager},
+    spatial_grid::SpatialGrid,
 };
 
 pub struct World {
@@ -17,6 +17,7 @@ pub struct World {
     pub enemies: Vec<Enemy>,
     pub bullets: Vec<Bullet>,
     pub sound_manager: SoundManager,
+    pub spatial_grid: SpatialGrid<usize>,
 }
 
 impl World {
@@ -28,12 +29,39 @@ impl World {
             enemies: Vec::new(),
             bullets: Vec::new(),
             sound_manager: SoundManager::new(),
+            spatial_grid: SpatialGrid::new(50.0),
+        }
+    }
+
+    // 根据当前实体位置重建空间网格
+    fn update_spatial_grid(&mut self) {
+        self.spatial_grid.clear();
+
+        // 将敌人添加到网格中
+        for (idx, enemy) in self.enemies.iter().enumerate() {
+            self.spatial_grid.insert(
+                idx,
+                enemy.bounds.x,
+                enemy.bounds.y,
+                enemy.bounds.width as f32,
+                enemy.bounds.height as f32,
+            );
         }
     }
 
     pub fn update(&mut self, game_data: &mut GameData) {
-        let player = self.player.as_mut().unwrap();
-        player.update(self.width, self.height);
+        {
+            let player = self.player.as_mut().unwrap();
+            player.update(self.width, self.height);
+
+            // 处理玩家射击 - 传入敌人引用
+            if let Some(new_bullet) = player.try_shoot(&self.enemies) {
+                self.bullets.push(new_bullet);
+            }
+        }
+
+        // 使用当前敌人位置更新空间网格
+        self.update_spatial_grid();
 
         // 使用 HashSet 来存储要移除的索引，避免重复
         let mut bullets_to_remove = HashSet::new();
@@ -50,11 +78,6 @@ impl World {
             }
         }
 
-        // 处理玩家射击 - 传入敌人引用
-        if let Some(new_bullet) = player.try_shoot(&self.enemies) {
-            self.bullets.push(new_bullet);
-        }
-
         // 更新子弹并检查碰撞
         for (bullet_idx, bullet) in self.bullets.iter_mut().enumerate() {
             bullet.update();
@@ -67,13 +90,24 @@ impl World {
 
             // 检查碰撞
             if bullet.owner == BulletOwner::Player {
-                for (enemy_idx, enemy) in self.enemies.iter_mut().enumerate() {
+                // Get potential collision candidates from spatial grid
+                let potential_collisions = self.spatial_grid.query_potential_collisions(
+                    bullet.bounds.x,
+                    bullet.bounds.y,
+                    bullet.bounds.width as f32,
+                    bullet.bounds.height as f32,
+                );
+
+                for &enemy_idx in potential_collisions.iter() {
+                    // 仍需进行精确碰撞检测
+                    let enemy = &mut self.enemies[enemy_idx];
+
                     if bullet.bounds.is_overlapping(&enemy.bounds) {
                         bullets_to_remove.insert(bullet_idx);
 
                         // 对敌人造成伤害
                         if enemy.take_damage(bullet.damage) {
-                            // 如果敌人死亡
+                            // 如果敌人被击败
                             enemies_to_remove.insert(enemy_idx);
                             game_data.score += 1;
                             self.sound_manager.play_sound(&SoundEffect::Collect);
@@ -179,7 +213,7 @@ impl World {
         let mut rng = rand::thread_rng();
         for _ in 0..count {
             let x = rng.gen_range(0..self.width) as f32;
-            let y = 0.0;
+            let y = rng.gen_range(0..self.height / 2) as f32;
             let enemy = Enemy::new(20, x, y, 0.5);
             self.enemies.push(enemy);
         }

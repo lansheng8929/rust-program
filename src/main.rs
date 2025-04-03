@@ -1,8 +1,9 @@
 #![deny(clippy::all)]
 #![forbid(unsafe_code)]
-#![windows_subsystem = "windows"]
+// #![windows_subsystem = "windows"]
 
 use app::App;
+use core::time::Duration;
 use rust_embed::RustEmbed;
 use winit::event_loop::{ControlFlow, EventLoop};
 
@@ -17,6 +18,7 @@ mod input_state;
 mod player;
 mod rectangle;
 mod sound;
+mod spatial_grid;
 mod uitils;
 mod world;
 
@@ -24,8 +26,8 @@ mod world;
 #[folder = "assets/"]
 struct Assets;
 
-static WIDTH: u32 = 300;
-static HEIGHT: u32 = 300;
+const WIDTH: usize = 300;
+const HEIGHT: usize = 300;
 
 fn main() {
     let event_loop = EventLoop::new().unwrap();

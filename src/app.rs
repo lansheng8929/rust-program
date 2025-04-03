@@ -1,3 +1,5 @@
+use std::time::{Duration, Instant};
+
 use pixels::wgpu::RequestAdapterOptions;
 use pixels::{Pixels, SurfaceTexture};
 use rand::Rng;
@@ -18,6 +20,10 @@ use crate::{HEIGHT, WIDTH};
 
 pub struct App {
     frame_count: u32,
+    frame_duration: Duration,
+    last_frame_update: Instant,
+    last_fps_update: Instant,
+
     window: Option<Window>,
     pixels: Option<Pixels>,
     world: Option<World>,
@@ -29,7 +35,11 @@ pub struct App {
 impl Default for App {
     fn default() -> Self {
         Self {
-            frame_count: 0,
+            frame_count: 0,                                      // 帧累计
+            frame_duration: Duration::from_secs_f64(1.0 / 60.0), // 1秒钟下1帧的真实时间
+            last_frame_update: Instant::now(),
+            last_fps_update: Instant::now(),
+
             window: None,
             pixels: None,
             world: None,
@@ -54,7 +64,7 @@ impl ApplicationHandler for App {
         let window_size = window.inner_size();
         let surface_texture = SurfaceTexture::new(window_size.width, window_size.height, &window);
         self.pixels = Some(
-            pixels::PixelsBuilder::new(WIDTH, HEIGHT, surface_texture)
+            pixels::PixelsBuilder::new(WIDTH as u32, HEIGHT as u32, surface_texture)
                 .request_adapter_options(RequestAdapterOptions {
                     compatible_surface: None,
                     power_preference: pixels::wgpu::PowerPreference::HighPerformance,
@@ -64,7 +74,7 @@ impl ApplicationHandler for App {
                 .unwrap(),
         );
 
-        let mut world = World::new(WIDTH, HEIGHT);
+        let mut world = World::new(WIDTH as u32, HEIGHT as u32);
         world.set_player(Player::new(20, 10.0, (HEIGHT as f32) - 10.0, 3.0));
         // world.set_enemy(Enemy::new(10, 10, 10, 10));
         self.world = Some(world);
@@ -134,33 +144,45 @@ impl ApplicationHandler for App {
                 // Draw.
 
                 self.frame_count = (self.frame_count + 1) % u32::MAX;
+                let now = Instant::now();
+                let elapsed = now.duration_since(self.last_frame_update);
 
-                // 每隔一段时间生成新的敌人
-                let mut rng = rand::thread_rng();
-                if self.frame_count % rng.gen_range(100..300) == 0 {
-                    // 每300帧生成新敌人
-                    if world.enemies.len() < 100 {
-                        // 限制最大敌人数量
+                self.fps_elapsed += elapsed;
+                if fps_elapsed >= Duration::from_secs(1) {
+                    self.last_fps_update = now;
+                    self.game_data.fps = 1.0 / elapsed.as_secs_f32().round();
+                }
 
-                        world.spawn_enemies(rng.gen_range(2..5));
+                if elapsed >= self.frame_duration {
+                    self.last_frame_update = now;
+
+                    // 每隔一段时间生成新的敌人
+                    let mut rng = rand::thread_rng();
+                    if self.frame_count % rng.gen_range(100..300) == 0 {
+                        // 每300帧生成新敌人
+                        if world.enemies.len() < 100 {
+                            // 限制最大敌人数量
+
+                            world.spawn_enemies(rng.gen_range(2..5));
+                        }
                     }
-                }
 
-                world.update(&mut self.game_data);
-                gui.update(&self.game_data);
+                    world.update(&mut self.game_data);
+                    gui.update(&self.game_data);
 
-                let frame = pixels.frame_mut();
-                for (i, pixel) in frame.chunks_exact_mut(4).enumerate() {
-                    let x = (i % (WIDTH as usize)) as f32;
-                    let y = (i / (HEIGHT as usize)) as f32;
+                    let frame = pixels.frame_mut();
+                    for (i, pixel) in frame.chunks_exact_mut(4).enumerate() {
+                        let x = (i % (WIDTH as usize)) as f32;
+                        let y = (i / (HEIGHT as usize)) as f32;
 
-                    world.draw(pixel, x, y);
-                    gui.draw(pixel, x, y);
-                }
-                if let Err(err) = pixels.render() {
-                    println!("pixels.render() failed: {}", err);
-                    event_loop.exit();
-                    return;
+                        world.draw(pixel, x, y);
+                        gui.draw(pixel, x, y);
+                    }
+                    if let Err(err) = pixels.render() {
+                        println!("pixels.render() failed: {}", err);
+                        event_loop.exit();
+                        return;
+                    }
                 }
 
                 // Draw.

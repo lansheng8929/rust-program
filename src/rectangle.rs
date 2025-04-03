@@ -59,7 +59,6 @@ impl<S: Clone + Eq + Hash> Rectangle<S> {
         let rel_y = y - self.y;
 
         if rel_x >= 0.0 && rel_y >= 0.0 && rel_x < self.width as f32 && rel_y < self.height as f32 {
-            print!("Drawing rectangle at ({}, {})", rel_x, rel_y);
             if let Some(texture) = self.animation.get_current_frame() {
                 let tex_width = texture.width();
                 let tex_height = texture.height();
