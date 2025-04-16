@@ -21,7 +21,7 @@ impl Default for Player {
 impl Player {
     pub fn new(size: u32, x: i32, y: i32, speed: i32) -> Self {
         let mut bounds = Rectangle::new(x, y, size, size);
-        bounds.load_texture("player.png");
+        bounds.load_texture("assets/player.png");
         Self {
             bounds,
             speed,
