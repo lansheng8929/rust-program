@@ -4,4 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace]
-members = ["protect-home-game", "catch-apple-game", "my-ecs-framework"]
+members = [
+    "protect-home-game",
+    "catch-apple-game",
+    "my-ecs-framework",
+    "test-game",
+]
