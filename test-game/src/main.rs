@@ -66,19 +66,19 @@ impl RenderSystem {
         }
     }
 
-    fn draw_rectangle(&mut self, x: u32, y: u32, width: u32, height: u32, color: [u8; 4]) {
+    fn draw_rectangle(&mut self, x: i32, y: i32, width: u32, height: u32, color: [u8; 4]) {
         if let Some(pixels) = &mut self.pixels {
             let frame = pixels.frame_mut();
             for dy in 0..height {
                 for dx in 0..width {
-                    let x = x + dx;
-                    let y = y + dy;
+                    let x = x + (dx as i32);
+                    let y = y + (dy as i32);
 
-                    if x >= WINDOW_WIDTH || y >= WINDOW_HEIGHT {
+                    if x < 0 || y < 0 || x >= (WINDOW_WIDTH as i32) || y >= (WINDOW_HEIGHT as i32) {
                         continue;
                     }
 
-                    let index = ((y * WINDOW_WIDTH + x) * 4) as usize;
+                    let index = ((y * (WINDOW_WIDTH as i32) + x) * 4) as usize;
                     frame[index] = color[0]; // R
                     frame[index + 1] = color[1]; // G
                     frame[index + 2] = color[2]; // B
@@ -144,8 +144,8 @@ impl ApplicationHandler for App {
                 name: "Player",
             });
             world.add_component_to_entity(entity_id, Transform {
-                position: (random_x, random_y),
-                velocity: (1, 1),
+                position: (random_x as i32, random_y as i32),
+                velocity: (2, 3),
             });
             world.add_component_to_entity(entity_id, CollisionBox {
                 width: 10,
@@ -157,12 +157,7 @@ impl ApplicationHandler for App {
         world.add_system(PlayerSystem {}).add_system(RenderSystem::new(&window));
         world.update();
 
-        let window_size = window.inner_size();
-        let surface_texture = SurfaceTexture::new(window_size.width, window_size.height, &window);
-        let pixels = Pixels::new(WINDOW_WIDTH, WINDOW_HEIGHT, surface_texture).unwrap();
-
         self.window = Some(window);
-        self.pixels = Some(pixels);
         self.world = Some(world);
 
         self.window.as_ref().unwrap().request_redraw();

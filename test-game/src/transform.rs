@@ -2,7 +2,7 @@ use ecs_rust::component::Component;
 
 #[derive(Debug)]
 pub struct Transform {
-    pub position: (u32, u32),
+    pub position: (i32, i32),
     pub velocity: (i32, i32),
 }
 
