@@ -1,14 +1,13 @@
 use ecs_rust::{
     component::Component,
-    entity_manager::{ EntityIdAccessor, EntityManager },
+    entity_manager::{EntityIdAccessor, EntityManager},
     system::System,
 };
 
 use crate::{
+    WINDOW_HEIGHT, WINDOW_WIDTH,
     collision_box::CollisionBox,
-    transform::{ self, Transform },
-    WINDOW_HEIGHT,
-    WINDOW_WIDTH,
+    transform::{self, Transform},
 };
 
 pub struct Player {
@@ -22,37 +21,60 @@ pub struct PlayerSystem;
 impl System for PlayerSystem {
     fn update(&mut self, manager: &mut EntityManager, accessor: &mut EntityIdAccessor) {
         if let Some(transform_ids) = accessor.borrow_ids_for_pair::<Transform, Player>(manager) {
+            let mut updates = Vec::new();
+
             for transform_id in transform_ids {
-                if let Some(transform) = manager.borrow_component_mut::<Transform>(*transform_id) {
-                    let position = transform.position;
-                    let mut velocity = transform.velocity;
+                if let (Some(transform), Some(collision_box)) = (
+                    manager.borrow_component::<Transform>(*transform_id),
+                    manager.borrow_component::<CollisionBox>(*transform_id),
+                ) {
+                    let self_transform = transform;
+                    let self_position = self_transform.position;
+                    let mut self_velocity = self_transform.velocity;
+                    let self_collision_box = collision_box;
 
-                    // 可变借用结束，此时 `manager` 的可变借用已释放
-                    if
-                        let Some(collision_box) = manager.borrow_component::<CollisionBox>(
-                            *transform_id
-                        )
-                    {
-                        collision_box.handle_wall_bounce(
-                            &mut (position.0 as i32),
-                            &mut (position.1 as i32),
-                            &mut velocity.0,
-                            &mut velocity.1
-                        );
+                    let normal = self_collision_box.handle_wall_bounce(self_transform);
+                    println!(
+                        "Velocity: ({}, {}) Position: ({}, {})",
+                        self_velocity.0, self_velocity.1, self_position.0, self_position.1
+                    );
+                    println!("normal:({}, {})", normal.0, normal.1);
+                    if normal.0 != 0 || normal.1 != 0 {
+                        if normal.0 != 0 && normal.1 != 0 {
+                            // Handle corner collision: reverse both velocity components
+                            self_velocity.0 = -self_velocity.0;
+                            self_velocity.1 = -self_velocity.1;
+                        } else {
+                            let dot_product =
+                                self_velocity.0 * normal.0 + self_velocity.1 * normal.1;
+                            self_velocity.0 -= 2 * dot_product * normal.0;
+                            self_velocity.1 -= 2 * dot_product * normal.1;
+                        }
                     }
 
-                    // 更新 `Transform` 的数据
-                    if
-                        let Some(transform) = manager.borrow_component_mut::<Transform>(
-                            *transform_id
-                        )
-                    {
-                       
-                        transform.velocity.0 = velocity.0;
-                        transform.velocity.1 = velocity.1;
-                        transform.position.0 += velocity.0;
-                        transform.position.1 += velocity.1;
-                    }
+                    println!(
+                        "goto:（{}，{}）",
+                        self_position.0 + self_velocity.0,
+                        self_position.1 + self_velocity.1
+                    );
+
+                    updates.push((
+                        *transform_id,
+                        self_velocity,
+                        (
+                            (self_position.0 + self_velocity.0)
+                                .min(WINDOW_WIDTH as i32 - self_collision_box.width as i32),
+                            (self_position.1 + self_velocity.1)
+                                .min(WINDOW_HEIGHT as i32 - self_collision_box.height as i32),
+                        ),
+                    ));
+                }
+            }
+
+            for (transform_id, new_velocity, new_position) in updates {
+                if let Some(transform) = manager.borrow_component_mut::<Transform>(transform_id) {
+                    transform.velocity = new_velocity;
+                    transform.position = new_position;
                 }
             }
         }

@@ -1,21 +1,22 @@
 use collision_box::CollisionBox;
-use ecs_rust::entity_manager::{ EntityIdAccessor, EntityManager };
+use ecs_rust::entity_manager::{EntityIdAccessor, EntityManager};
 use ecs_rust::system::System;
 use ecs_rust::world::World;
 use pixels::wgpu::RequestAdapterOptions;
-use pixels::{ Pixels, SurfaceTexture };
-use player::{ Player, PlayerSystem };
+use pixels::{Pixels, SurfaceTexture};
+use player::{Player, PlayerSystem};
 use rand::Rng;
 use transform::Transform;
 use winit::application::ApplicationHandler;
 use winit::dpi::LogicalSize;
 use winit::event::WindowEvent;
-use winit::event_loop::{ ActiveEventLoop, ControlFlow, EventLoop };
-use winit::window::{ Window, WindowId };
+use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
+use winit::keyboard::{KeyCode, PhysicalKey};
+use winit::window::{Window, WindowId};
 
+mod collision_box;
 mod player;
 mod transform;
-mod collision_box;
 
 struct RenderSystem {
     pixels: Option<Pixels>,
@@ -24,19 +25,17 @@ impl System for RenderSystem {
     fn update(&mut self, manager: &mut EntityManager, _accessor: &mut EntityIdAccessor) {
         self.clear_screen();
 
-        if
-            let (Some(players), Some(transforms)) = (
-                manager.borrow_components::<Player>(),
-                manager.borrow_components::<Transform>(),
-            )
-        {
+        if let (Some(players), Some(transforms)) = (
+            manager.borrow_components::<Player>(),
+            manager.borrow_components::<Transform>(),
+        ) {
             for (i, (_player, transform)) in players.iter().zip(transforms.iter()).enumerate() {
                 self.draw_rectangle(
                     transform.position.0,
                     transform.position.1,
                     10,
                     10,
-                    [0xff, 0x00, 0x00, 0xff]
+                    [0xff, 0x00, 0x00, 0xff],
                 );
             }
         }
@@ -51,8 +50,7 @@ impl RenderSystem {
     fn new(window: &Window) -> Self {
         let window_size = window.inner_size();
         let surface_texture = SurfaceTexture::new(window_size.width, window_size.height, &window);
-        let pixels = pixels::PixelsBuilder
-            ::new(WINDOW_WIDTH, WINDOW_HEIGHT, surface_texture)
+        let pixels = pixels::PixelsBuilder::new(WINDOW_WIDTH, WINDOW_HEIGHT, surface_texture)
             .request_adapter_options(RequestAdapterOptions {
                 compatible_surface: None,
                 power_preference: pixels::wgpu::PowerPreference::HighPerformance,
@@ -101,7 +99,11 @@ impl RenderSystem {
     }
 
     fn render(&mut self) -> Result<(), pixels::Error> {
-        if let Some(pixels) = &mut self.pixels { pixels.render() } else { Ok(()) }
+        if let Some(pixels) = &mut self.pixels {
+            pixels.render()
+        } else {
+            Ok(())
+        }
     }
 }
 
@@ -121,7 +123,7 @@ impl ApplicationHandler for App {
             .create_window(
                 Window::default_attributes()
                     .with_inner_size(LogicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT))
-                    .with_title("Game Window")
+                    .with_title("Game Window"),
             )
             .unwrap();
 
@@ -133,28 +135,34 @@ impl ApplicationHandler for App {
 
         let mut rng = rand::thread_rng();
 
-        for i in 0..100 {
+        for i in 0..1 {
             let entity_id = world.create_entity();
 
             // 生成随机位置
             let random_x = rng.gen_range(0..WINDOW_WIDTH - 50); // 确保不会超出窗口宽度
             let random_y = rng.gen_range(0..WINDOW_HEIGHT - 50); // 确保不会超出窗口高度
 
-            world.add_component_to_entity(entity_id, Player {
-                name: "Player",
-            });
-            world.add_component_to_entity(entity_id, Transform {
-                position: (random_x as i32, random_y as i32),
-                velocity: (2, 3),
-            });
-            world.add_component_to_entity(entity_id, CollisionBox {
-                width: 10,
-                height: 10,
-                is_trigger: false,
-            });
+            world.add_component_to_entity(entity_id, Player { name: "Player" });
+            world.add_component_to_entity(
+                entity_id,
+                Transform {
+                    position: (random_x as i32, random_y as i32),
+                    velocity: (10, 10),
+                },
+            );
+            world.add_component_to_entity(
+                entity_id,
+                CollisionBox {
+                    width: 10,
+                    height: 10,
+                    is_trigger: false,
+                },
+            );
         }
 
-        world.add_system(PlayerSystem {}).add_system(RenderSystem::new(&window));
+        world
+            .add_system(PlayerSystem {})
+            .add_system(RenderSystem::new(&window));
         world.update();
 
         self.window = Some(window);
@@ -165,6 +173,20 @@ impl ApplicationHandler for App {
 
     fn window_event(&mut self, event_loop: &ActiveEventLoop, id: WindowId, event: WindowEvent) {
         match event {
+            WindowEvent::KeyboardInput {
+                device_id: _,
+                event,
+                is_synthetic: _,
+            } => {
+                let pressed = event.state.is_pressed();
+                if let PhysicalKey::Code(key) = event.physical_key {
+                    if key == KeyCode::Escape {
+                        event_loop.exit();
+                        return;
+                    }
+                    // player.input(key, pressed);
+                }
+            }
             WindowEvent::CloseRequested => {
                 println!("The close button was pressed; stopping");
                 event_loop.exit();
