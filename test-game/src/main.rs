@@ -135,7 +135,7 @@ impl ApplicationHandler for App {
 
         let mut rng = rand::thread_rng();
 
-        for i in 0..1 {
+        for i in 0..100 {
             let entity_id = world.create_entity();
 
             // 生成随机位置

@@ -6,7 +6,7 @@ use ecs_rust::{
 
 use crate::{
     WINDOW_HEIGHT, WINDOW_WIDTH,
-    collision_box::CollisionBox,
+    collision_box::{self, CollisionBox},
     transform::{self, Transform},
 };
 
@@ -34,14 +34,13 @@ impl System for PlayerSystem {
                     let self_collision_box = collision_box;
 
                     let normal = self_collision_box.handle_wall_bounce(self_transform);
-                    println!(
-                        "Velocity: ({}, {}) Position: ({}, {})",
-                        self_velocity.0, self_velocity.1, self_position.0, self_position.1
-                    );
-                    println!("normal:({}, {})", normal.0, normal.1);
+                    // println!(
+                    //     "Velocity: ({}, {}) Position: ({}, {})",
+                    //     self_velocity.0, self_velocity.1, self_position.0, self_position.1
+                    // );
+                    // println!("normal:({}, {})", normal.0, normal.1);
                     if normal.0 != 0 || normal.1 != 0 {
                         if normal.0 != 0 && normal.1 != 0 {
-                            // Handle corner collision: reverse both velocity components
                             self_velocity.0 = -self_velocity.0;
                             self_velocity.1 = -self_velocity.1;
                         } else {
@@ -52,11 +51,31 @@ impl System for PlayerSystem {
                         }
                     }
 
-                    println!(
-                        "goto:（{}，{}）",
-                        self_position.0 + self_velocity.0,
-                        self_position.1 + self_velocity.1
-                    );
+                    for _transform_id in transform_ids {
+                        if (_transform_id != transform_id) {
+                            if let (Some(other_transform), Some(other_collision_box)) = (
+                                manager.borrow_component::<Transform>(*_transform_id),
+                                manager.borrow_component::<CollisionBox>(*_transform_id),
+                            ) {
+                                if self_collision_box.check_collision(
+                                    other_collision_box,
+                                    self_transform,
+                                    other_transform,
+                                ) {
+                                    self_velocity.0 = -self_velocity.0;
+                                    self_velocity.1 = -self_velocity.1;
+                                }
+                            }
+                        } else {
+                            continue;
+                        }
+                    }
+
+                    // println!(
+                    //     "goto:（{}，{}）",
+                    //     self_position.0 + self_velocity.0,
+                    //     self_position.1 + self_velocity.1
+                    // );
 
                     updates.push((
                         *transform_id,
