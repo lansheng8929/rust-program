@@ -11,21 +11,21 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub enum PlayerState {
+pub enum EntityState {
     Idle,
     Moving,
     Jumping,
     Shooting,
 }
 
-pub struct Player {
-    pub bounds: Rectangle<PlayerState>,
+pub struct Entity {
+    pub bounds: Rectangle<EntityState>,
     speed: f32,
     input_state: InputState,
     shoot_cooldown: u32,
 }
 
-impl Default for Player {
+impl Default for Entity {
     fn default() -> Self {
         Self {
             bounds: Rectangle::new(10.0, 10.0, 10, 10),
@@ -36,14 +36,14 @@ impl Default for Player {
     }
 }
 
-impl Player {
+impl Entity {
     pub fn new(size: u32, x: f32, y: f32, speed: f32) -> Self {
         let mut bounds = Rectangle::new(x, y, size, size);
 
-        bounds.load_animation_state(PlayerState::Moving, "player_moving", 1);
+        bounds.load_animation_state(EntityState::Moving, "player_moving", 1);
 
         // 设置初始状态
-        bounds.animation.set_state(PlayerState::Moving);
+        bounds.animation.set_state(EntityState::Moving);
         bounds.animation.set_speed(10);
 
         Self {
@@ -119,7 +119,7 @@ impl Player {
                 bullet_start_y,
                 10.0,
                 target_angle,
-                BulletOwner::Player,
+                BulletOwner::Entity,
                 20.0, // 设置子弹伤害值
             ))
         } else {

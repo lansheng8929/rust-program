@@ -2,14 +2,14 @@ use crate::{
     apple::Apple,
     enemy::Enemy,
     game_data::{self, GameData},
-    player::Player,
+    player::Entity,
     sound::{SoundEffect, SoundManager},
 };
 
 pub struct World {
     width: u32,
     height: u32,
-    pub player: Option<Player>,
+    pub player: Option<Entity>,
     pub enemy: Option<Enemy>,
     pub apple: Vec<Apple>,
     pub sound_manager: SoundManager,
@@ -81,7 +81,7 @@ impl World {
         }
     }
 
-    pub fn set_player(&mut self, player: Player) {
+    pub fn set_player(&mut self, player: Entity) {
         self.player = Some(player);
     }
 

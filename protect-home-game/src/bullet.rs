@@ -7,7 +7,7 @@ pub enum BulletState {
 
 #[derive(Debug, PartialEq)]
 pub enum BulletOwner {
-    Player,
+    Entity,
     Enemy,
 }
 

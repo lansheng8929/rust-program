@@ -5,7 +5,7 @@ use crate::{
     bullet::{Bullet, BulletOwner},
     enemy::Enemy,
     game_data::GameData,
-    player::Player,
+    player::Entity,
     sound::{SoundEffect, SoundManager},
     spatial_grid::SpatialGrid,
 };
@@ -13,7 +13,7 @@ use crate::{
 pub struct World {
     width: u32,
     height: u32,
-    pub player: Option<Player>,
+    pub player: Option<Entity>,
     pub enemies: Vec<Enemy>,
     pub bullets: Vec<Bullet>,
     pub sound_manager: SoundManager,
@@ -89,7 +89,7 @@ impl World {
             }
 
             // 检查碰撞
-            if bullet.owner == BulletOwner::Player {
+            if bullet.owner == BulletOwner::Entity {
                 // Get potential collision candidates from spatial grid
                 let potential_collisions = self.spatial_grid.query_potential_collisions(
                     bullet.bounds.x,
@@ -187,7 +187,7 @@ impl World {
             .find(|bullet| bullet.bounds.contains_point(x, y))
         {
             let bullet_color = match bullet.owner {
-                BulletOwner::Player => [255, 255, 0, 255], // 玩家子弹黄色
+                BulletOwner::Entity => [255, 255, 0, 255], // 玩家子弹黄色
                 BulletOwner::Enemy => [255, 0, 0, 255],    // 敌人子弹红色
             };
             final_pixel = bullet_color;
@@ -200,7 +200,7 @@ impl World {
         pixel.copy_from_slice(&final_pixel);
     }
 
-    pub fn set_player(&mut self, player: Player) {
+    pub fn set_player(&mut self, player: Entity) {
         self.player = Some(player);
     }
 

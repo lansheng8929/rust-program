@@ -14,7 +14,7 @@ use crate::cursor_state::CursorState;
 use crate::enemy::Enemy;
 use crate::game_data::GameData;
 use crate::gui::{GuiManager, Label};
-use crate::player::Player;
+use crate::player::Entity;
 use crate::world::World;
 use crate::{HEIGHT, WIDTH};
 
@@ -75,7 +75,7 @@ impl ApplicationHandler for App {
         );
 
         let mut world = World::new(WIDTH as u32, HEIGHT as u32);
-        world.set_player(Player::new(20, 10.0, (HEIGHT as f32) - 10.0, 3.0));
+        world.set_player(Entity::new(20, 10.0, (HEIGHT as f32) - 10.0, 3.0));
         // world.set_enemy(Enemy::new(10, 10, 10, 10));
         self.world = Some(world);
 

@@ -2,13 +2,13 @@ use winit::keyboard::KeyCode;
 
 use crate::{input_state::InputState, rectangle::Rectangle, uitils::constrain_to_bounds};
 
-pub struct Player {
+pub struct Entity {
     pub bounds: Rectangle,
     speed: i32,
     input_state: InputState,
 }
 
-impl Default for Player {
+impl Default for Entity {
     fn default() -> Self {
         Self {
             bounds: Rectangle::new(10, 10, 10, 10),
@@ -18,7 +18,7 @@ impl Default for Player {
     }
 }
 
-impl Player {
+impl Entity {
     pub fn new(size: u32, x: i32, y: i32, speed: i32) -> Self {
         let mut bounds = Rectangle::new(x, y, size, size);
         bounds.load_texture("assets/player.png");
