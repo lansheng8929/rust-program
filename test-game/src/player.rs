@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use ecs_rust::{
+use my_ecs_rust::{
     component::Component,
     entity_manager::{EntityIdAccessor, EntityManager},
     system::System,
@@ -46,11 +46,11 @@ impl Player {
             animations: HashMap::from([
                 (
                     PlayerState::Idle,
-                    Animation::new(get_assets_image_buffer("player_idle", 10, 10, 4), 1000.0),
+                    Animation::new(get_assets_image_buffer("player_idle", 32, 32, 4), 1000.0),
                 ),
                 (
                     PlayerState::Moving,
-                    Animation::new(get_assets_image_buffer("player_moving", 10, 10, 4), 1000.0),
+                    Animation::new(get_assets_image_buffer("player_moving", 32, 32, 4), 1000.0),
                 ),
             ]),
         }
@@ -80,7 +80,7 @@ impl System for PlayerSystem {
                     manager.borrow_component::<CollisionBox>(*player_id),
                 ) {
                     if let Some(input) = manager.borrow_component::<Input>(*player_id) {
-                        let speed = 5;
+                        let speed = 5.0;
                         let (mut goto_x, mut goto_y) = (transform.position.0, transform.position.1);
 
                         if input.left_pressed {
@@ -89,12 +89,12 @@ impl System for PlayerSystem {
                         if input.right_pressed {
                             goto_x += speed;
                         }
-                        if input.up_pressed {
-                            goto_y -= speed;
-                        }
-                        if input.down_pressed {
-                            goto_y += speed;
-                        }
+                        // if input.up_pressed {
+                        //     goto_y -= speed;
+                        // }
+                        // if input.down_pressed {
+                        //     goto_y += speed;
+                        // }
 
                         if input.left_pressed
                             || input.right_pressed
@@ -105,12 +105,9 @@ impl System for PlayerSystem {
                                 *player_id,
                                 transform.velocity,
                                 (
-                                    goto_x
-                                        .clamp(0, WINDOW_WIDTH as i32 - collision_box.width as i32),
-                                    goto_y.clamp(
-                                        0,
-                                        WINDOW_HEIGHT as i32 - collision_box.height as i32,
-                                    ),
+                                    goto_x.clamp(0.0, (WINDOW_WIDTH - collision_box.width) as f32),
+                                    goto_y
+                                        .clamp(0.0, (WINDOW_HEIGHT - collision_box.height) as f32),
                                 ),
                             ));
                         }

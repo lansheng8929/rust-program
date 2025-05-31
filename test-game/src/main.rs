@@ -2,18 +2,20 @@ use std::collections::HashMap;
 use std::time::Instant;
 
 use animation::Animation;
+use bullet::{Bullet, BulletState, BulletSystem};
 use collision_box::{CollisionBox, CollisionSystem};
-use ecs_rust::entity_manager::{EntityIdAccessor, EntityManager};
-use ecs_rust::system::System;
-use ecs_rust::world::World;
 use entity::{Entity, EntityState, EntitySystem};
+use gui::GuiSystem;
 use input::{Input, InputSystem};
+use my_ecs_rust::entity_manager::{EntityIdAccessor, EntityManager};
+use my_ecs_rust::system::System;
+use my_ecs_rust::world::World;
 use pixels::wgpu::RequestAdapterOptions;
 use pixels::{Pixels, SurfaceTexture};
 use player::{Player, PlayerSystem};
-use rand::Rng;
 use render::RenderSystem;
 use rust_embed::RustEmbed;
+use sound::SoundSystem;
 use transform::Transform;
 use winit::application::ApplicationHandler;
 use winit::dpi::LogicalSize;
@@ -23,11 +25,14 @@ use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowId};
 
 mod animation;
+mod bullet;
 mod collision_box;
 mod entity;
+mod gui;
 mod input;
 mod player;
 mod render;
+mod sound;
 mod transform;
 mod utils;
 
@@ -81,9 +86,12 @@ pub fn get_delta_time() -> f32 {
 #[derive(Default)]
 struct App {
     window: Option<Window>,
-    pixels: Option<Pixels>,
     world: Option<World>,
-    input_system: Option<InputSystem>,
+}
+
+#[derive(Default)]
+struct GameState {
+    score: u32,
 }
 
 const WINDOW_WIDTH: u32 = 800;
@@ -100,30 +108,33 @@ impl ApplicationHandler for App {
             .unwrap();
 
         let mut world = World::new();
+
+        world.add_resource::<SoundSystem>(SoundSystem::new());
+        world.add_resource::<GameState>(GameState::default());
+
         world
             .register_component::<Entity>()
             .register_component::<Player>()
             .register_component::<Transform>()
             .register_component::<CollisionBox>()
-            .register_component::<Input>();
-
-        let mut rng = rand::thread_rng();
+            .register_component::<Input>()
+            .register_component::<Bullet>();
 
         let player_id = world.create_entity();
         world.add_component_to_entity(player_id, Player::new(Some("player".to_string()), None));
         world.add_component_to_entity(
             player_id,
             Transform {
-                position: (WINDOW_WIDTH as i32 / 2, WINDOW_HEIGHT as i32 / 2),
-                velocity: (0, 0),
+                position: ((WINDOW_WIDTH / 2) as f32, (WINDOW_HEIGHT - 32) as f32),
+                velocity: (0.0, 0.0),
+                direction: (0.0, 1.0),
             },
         );
         world.add_component_to_entity(
             player_id,
             CollisionBox {
-                width: 10,
-                height: 10,
-                is_trigger: false,
+                width: 32,
+                height: 32,
             },
         );
         world.add_component_to_entity(
@@ -137,40 +148,15 @@ impl ApplicationHandler for App {
             },
         );
 
-        for i in 0..1 {
-            let entity_id = world.create_entity();
-
-            // 生成随机位置
-            let random_x = rng.gen_range(0..WINDOW_WIDTH - 50); // 确保不会超出窗口宽度
-            let random_y = rng.gen_range(0..WINDOW_HEIGHT - 50); // 确保不会超出窗口高度
-
-            world.add_component_to_entity(
-                entity_id,
-                Entity::new(Some("enemy".to_string()), Some(EntityState::Moving)),
-            );
-            world.add_component_to_entity(
-                entity_id,
-                Transform {
-                    position: (random_x as i32, random_y as i32),
-                    velocity: (rng.gen_range(1..2), rng.gen_range(1..2)),
-                },
-            );
-            world.add_component_to_entity(
-                entity_id,
-                CollisionBox {
-                    width: 10,
-                    height: 10,
-                    is_trigger: false,
-                },
-            );
-        }
-
         world
             .add_system(RenderSystem::new(&window))
-            .add_system(EntitySystem {})
+            .add_system(EntitySystem::new())
+            .add_system(BulletSystem::new())
             .add_system(PlayerSystem {})
             .add_system(InputSystem {})
-            .add_system(CollisionSystem {});
+            .add_system(CollisionSystem {})
+            .add_system(GuiSystem {});
+
         world.update();
 
         self.window = Some(window);
@@ -209,6 +195,7 @@ impl ApplicationHandler for App {
                 update_frame_time();
 
                 // Draw.
+
                 if let Some(world) = &mut self.world {
                     world.update();
                 }

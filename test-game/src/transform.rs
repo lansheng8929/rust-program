@@ -1,9 +1,10 @@
-use ecs_rust::component::Component;
+use my_ecs_rust::component::Component;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Transform {
-    pub position: (i32, i32),
-    pub velocity: (i32, i32),
+    pub position: (f32, f32),
+    pub velocity: (f32, f32),
+    pub direction: (f32, f32),
 }
 
 impl Transform {}

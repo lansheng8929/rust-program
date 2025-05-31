@@ -7,6 +7,6 @@ edition = "2024"
 members = [
     "protect-home-game",
     "catch-apple-game",
-    "my-ecs-framework",
+    "my-ecs-rust",
     "test-game",
 ]

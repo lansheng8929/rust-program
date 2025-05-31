@@ -1,6 +1,6 @@
-use ecs_rust::component::Component;
-use ecs_rust::entity_manager::{EntityIdAccessor, EntityManager};
-use ecs_rust::system::System;
+use my_ecs_rust::component::Component;
+use my_ecs_rust::entity_manager::{EntityIdAccessor, EntityManager};
+use my_ecs_rust::system::System;
 use winit::keyboard::KeyCode;
 
 use crate::entity::{self, Entity};
@@ -27,9 +27,7 @@ impl System for InputSystem {
     fn update(&mut self, manager: &mut EntityManager, accessor: &mut EntityIdAccessor) {
         let pressed_keys = get_pressed_keys();
 
-        let ids = accessor
-            .borrow_ids_for_pair::<Transform, Player>(manager)
-            .unwrap();
+        let ids = accessor.borrow_ids::<Player>(manager).unwrap();
 
         for id in ids.iter() {
             let player = manager.borrow_component::<Player>(*id).unwrap();

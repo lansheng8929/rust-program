@@ -1,6 +1,6 @@
 use image::{ImageBuffer, Rgba};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Animation {
     pub frames: Vec<ImageBuffer<Rgba<u8>, Vec<u8>>>, // 每个状态对应的动画帧
     pub current_frame: usize,                        // 当前播放的帧索引
@@ -20,7 +20,7 @@ impl Animation {
 
     pub fn update(&mut self, delta_time: &f32) {
         self.elapsed_time += delta_time;
-        println!("elapsed_time: {}", self.elapsed_time);
+        // println!("elapsed_time: {}", self.elapsed_time);
 
         if self.elapsed_time >= self.frame_duration {
             self.elapsed_time = 0.0;

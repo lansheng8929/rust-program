@@ -1,5 +1,5 @@
 [package]
-name = "my-ecs-framework"
+name = "my-ecs-rust"
 version = "0.1.0"
 edition = "2024"
 
