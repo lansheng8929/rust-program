@@ -1,7 +1,10 @@
-mod font8x8;
-mod gui_manager;
-mod label;
+use my_ecs_rust::entity_manager::{EntityIdAccessor, EntityManager};
+use my_ecs_rust::system::System;
 
-// pub use button::Button;
-pub use gui_manager::GuiManager;
-pub use label::Label;
+pub struct GuiSystem {}
+
+impl GuiSystem {}
+
+impl System for GuiSystem {
+    fn update(&mut self, manager: &mut EntityManager, _: &mut EntityIdAccessor) {}
+}

@@ -1,127 +1,34 @@
-use image::{ImageBuffer, RgbaImage};
-use std::collections::HashMap;
-use std::hash::Hash;
-
-use crate::{
-    Assets,
-    rectangle::{self, Rectangle},
-};
+use image::{ImageBuffer, Rgba};
 
 #[derive(Debug, Clone)]
-pub struct AnimationController<S: Clone + Eq + Hash> {
-    states: HashMap<S, Vec<RgbaImage>>,
-    current_state: Option<S>,
-    current_frame: usize,
-    timer: u32,
-    speed: u32,
+pub struct Animation {
+    pub frames: Vec<ImageBuffer<Rgba<u8>, Vec<u8>>>, // 每个状态对应的动画帧
+    pub current_frame: usize,                        // 当前播放的帧索引
+    pub frame_duration: f32,                         // 每帧持续的时间（单位：毫秒）
+    pub elapsed_time: f32,                           // 当前帧已播放的时间
 }
 
-impl<S: Clone + Eq + Hash> Default for AnimationController<S> {
-    fn default() -> Self {
-        Self {
-            states: HashMap::new(),
-            current_state: None,
+impl Animation {
+    pub fn new(frames: Vec<ImageBuffer<Rgba<u8>, Vec<u8>>>, frame_duration: f32) -> Self {
+        Animation {
+            frames,
             current_frame: 0,
-            timer: 0,
-            speed: 10,
-        }
-    }
-}
-
-impl<S: Clone + Eq + Hash> AnimationController<S> {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// 加载动画状态的帧序列
-    /// - state: 动画状态
-    /// - base_path: 帧图片的基础路径
-    /// - frame_count: 帧数量
-    pub fn load_state(
-        &mut self,
-        width: u32,
-        height: u32,
-        state: S,
-        base_path: &str,
-        frame_count: usize,
-    ) {
-        let mut frames = Vec::new();
-
-        for i in 0..frame_count {
-            let path = format!("{}_{}.png", base_path, i);
-            println!("{}", path);
-            if let Some(file) = Assets::get(&path) {
-                if let Ok(img) =
-                    image::load_from_memory_with_format(&file.data, image::ImageFormat::Png)
-                {
-                    let mut rgba_img = img.to_rgba8();
-                    // 如果图片尺寸与矩形不匹配，进行缩放
-                    if rgba_img.width() != width || rgba_img.height() != height {
-                        rgba_img = image::imageops::resize(
-                            &rgba_img,
-                            width,
-                            height,
-                            image::imageops::FilterType::Nearest,
-                        );
-                    }
-                    frames.push(rgba_img);
-                }
-            }
-        }
-
-        if frames.is_empty() {
-            let texture =
-                ImageBuffer::from_fn(width, height, |_, _| image::Rgba([255, 0, 255, 255]));
-            frames.push(texture);
-        }
-
-        println!("{}", frames.len());
-
-        self.states.insert(state, frames);
-    }
-
-    /// 切换动画状态
-    /// - state: 要切换到的新状态
-    pub fn set_state(&mut self, state: S) {
-        if self.current_state.as_ref() != Some(&state) {
-            self.current_state = Some(state);
-            self.reset();
+            frame_duration,
+            elapsed_time: 0.0,
         }
     }
 
-    /// 设置动画播放速度
-    /// - speed: 每帧持续的时间(tick数)
-    pub fn set_speed(&mut self, speed: u32) {
-        self.speed = speed;
-    }
+    pub fn update(&mut self, delta_time: &f32) {
+        self.elapsed_time += delta_time;
+        // println!("elapsed_time: {}", self.elapsed_time);
 
-    /// 更新动画状态，处理帧切换
-    pub fn update(&mut self) {
-        if let Some(state) = &self.current_state {
-            if let Some(frames) = self.states.get(state) {
-                if !frames.is_empty() {
-                    self.timer += 1;
-                    if self.timer >= self.speed {
-                        self.timer = 0;
-                        self.current_frame = (self.current_frame + 1) % frames.len();
-                    }
-                }
-            }
+        if self.elapsed_time >= self.frame_duration {
+            self.elapsed_time = 0.0;
+            self.current_frame = (self.current_frame + 1) % self.frames.len();
         }
     }
 
-    /// 重置动画到初始状态
-    pub fn reset(&mut self) {
-        self.current_frame = 0;
-        self.timer = 0;
-    }
-
-    /// 获取当前帧的图像
-    /// 返回当前动画帧的图像引用
-    pub fn get_current_frame(&self) -> Option<&RgbaImage> {
-        self.current_state
-            .as_ref()
-            .and_then(|state| self.states.get(state))
-            .and_then(|frames| frames.get(self.current_frame))
+    pub fn get_current_frame(&self) -> &ImageBuffer<Rgba<u8>, Vec<u8>> {
+        &self.frames[self.current_frame]
     }
 }
