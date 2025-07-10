@@ -11,7 +11,6 @@ use crate::{
     animation::Animation,
     collision_box::CollisionBox,
     entity::Entity,
-    get_delta_time,
     input::Input,
     player::Player,
     sound::{SoundEffect, SoundSystem},
@@ -149,14 +148,18 @@ impl BulletSystem {
 
 impl System for BulletSystem {
     fn update(&mut self, manager: &mut EntityManager, accessor: &mut EntityIdAccessor) {
-        let delta_time = get_delta_time();
+        let delta_time = if let Some(game_state) = manager.get_resource::<GameState>() {
+            game_state.delta_time
+        } else {
+            16.67 // fallback to ~60fps if GameState is not available
+        };
 
         self.bullet_spawn_timer += delta_time;
 
         let player_ids = accessor.borrow_ids::<Player>(manager);
         if let Some(player_ids) = player_ids {
             for player_id in player_ids.clone() {
-                if let Some(input) = manager.borrow_component::<Input>(player_id) {
+                if let Some(input) = manager.get_resource::<Input>() {
                     if input.shoot_pressed {
                         if self.bullet_spawn_timer >= 100.0 {
                             self.bullet_spawn_timer = 0.0;

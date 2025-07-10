@@ -10,7 +10,6 @@ use crate::{
     EntityTrait, GameState, WINDOW_HEIGHT, WINDOW_WIDTH, animation,
     bullet::{self, Bullet},
     entity::{self, Entity},
-    get_delta_time,
     gui::GuiSystem,
     player::{self, Player},
     transform::{self, Transform},
@@ -35,7 +34,13 @@ pub struct RenderSystem {
 
 impl System for RenderSystem {
     fn update(&mut self, manager: &mut EntityManager, accessor: &mut EntityIdAccessor) {
-        let delta_time = get_delta_time();
+        
+        let delta_time = if let Some(game_state) = manager.get_resource::<GameState>() {
+            game_state.delta_time
+        } else {
+            16.67 // fallback to ~60fps if GameState is not available
+        };
+
         self.clear_screen();
 
         if let Some(bullet_ids) = accessor.borrow_ids::<Bullet>(manager) {

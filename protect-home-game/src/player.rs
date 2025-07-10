@@ -79,7 +79,7 @@ impl System for PlayerSystem {
                     manager.borrow_component::<Transform>(*player_id),
                     manager.borrow_component::<CollisionBox>(*player_id),
                 ) {
-                    if let Some(input) = manager.borrow_component::<Input>(*player_id) {
+                    if let Some(input) = manager.get_resource::<Input>() {
                         let speed = 5.0;
                         let (mut goto_x, mut goto_y) = (transform.position.0, transform.position.1);
 

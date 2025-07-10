@@ -8,8 +8,7 @@ use my_ecs_rust::{
 };
 
 use crate::{
-    EntityTrait, WINDOW_HEIGHT, WINDOW_WIDTH, animation::Animation, collision_box::CollisionBox,
-    get_delta_time, transform::Transform, utils::get_assets_image_buffer,
+    animation::Animation, collision_box::CollisionBox, game_state::GameState, transform::Transform, utils::get_assets_image_buffer, EntityTrait, WINDOW_HEIGHT, WINDOW_WIDTH
 };
 
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -139,7 +138,11 @@ impl EntitySystem {
 
 impl System for EntitySystem {
     fn update(&mut self, manager: &mut EntityManager, accessor: &mut EntityIdAccessor) {
-        let delta_time = get_delta_time();
+        let delta_time = if let Some(game_state) = manager.get_resource::<GameState>() {
+            game_state.delta_time
+        } else {
+            16.67 // fallback to ~60fps if GameState is not available
+        };
 
         // Increment spawn timer
         self.enemy_spawn_timer += delta_time;

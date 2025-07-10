@@ -6,7 +6,8 @@ use bullet::{Bullet, BulletState, BulletSystem};
 use collision_box::{CollisionBox, CollisionSystem};
 use entity::{Entity, EntityState, EntitySystem};
 use gui::GuiSystem;
-use input::{Input, InputSystem};
+use input::{Input};
+use game_state::GameState;
 use my_ecs_rust::entity_manager::{EntityIdAccessor, EntityManager};
 use my_ecs_rust::system::System;
 use my_ecs_rust::world::World;
@@ -35,8 +36,11 @@ mod render;
 mod sound;
 mod transform;
 mod utils;
+mod game_state;
 
 use std::sync::{LazyLock, Mutex};
+
+
 
 #[derive(RustEmbed)]
 #[folder = "assets/"]
@@ -47,52 +51,12 @@ pub trait EntityTrait<T> {
     fn get_animation(&mut self) -> Option<&mut Animation>;
 }
 
-// 保存按键状态的全局变量
-static KEY_STATES: LazyLock<Mutex<HashMap<KeyCode, bool>>> =
-    LazyLock::new(|| Mutex::new(HashMap::new()));
-pub fn update_key_state(key: KeyCode, pressed: bool) {
-    KEY_STATES.lock().unwrap().insert(key, pressed);
-}
-pub fn is_key_pressed(key: KeyCode) -> bool {
-    *KEY_STATES.lock().unwrap().get(&key).unwrap_or(&false)
-}
-pub fn get_pressed_keys() -> Vec<KeyCode> {
-    KEY_STATES
-        .lock()
-        .unwrap()
-        .iter()
-        .filter_map(|(key, &pressed)| if pressed { Some(*key) } else { None })
-        .collect()
-}
-
-// 保存时间间隔的全局变量
-static DELTA_TIME: Mutex<f32> = Mutex::new(0.0);
-static LAST_TIME: Mutex<Option<Instant>> = Mutex::new(None);
-
-pub fn update_frame_time() {
-    let now = Instant::now();
-    let mut last_time_lock = LAST_TIME.lock().unwrap();
-    if let Some(last_time) = *last_time_lock {
-        let delta_time = now.duration_since(last_time).as_secs_f32();
-        *DELTA_TIME.lock().unwrap() = delta_time * 1000.0;
-    }
-    *last_time_lock = Some(now);
-}
-
-pub fn get_delta_time() -> f32 {
-    *DELTA_TIME.lock().unwrap()
-}
-
 #[derive(Default)]
 struct App {
     window: Option<Window>,
     world: Option<World>,
 }
 
-#[derive(Default)]
-struct GameState {
-    score: u32,
-}
 
 const WINDOW_WIDTH: u32 = 800;
 const WINDOW_HEIGHT: u32 = 600;
@@ -111,13 +75,13 @@ impl ApplicationHandler for App {
 
         world.add_resource::<SoundSystem>(SoundSystem::new());
         world.add_resource::<GameState>(GameState::default());
+        world.add_resource::<Input>(Input::default());
 
         world
             .register_component::<Entity>()
             .register_component::<Player>()
             .register_component::<Transform>()
             .register_component::<CollisionBox>()
-            .register_component::<Input>()
             .register_component::<Bullet>();
 
         let player_id = world.create_entity();
@@ -137,23 +101,13 @@ impl ApplicationHandler for App {
                 height: 32,
             },
         );
-        world.add_component_to_entity(
-            player_id,
-            Input {
-                left_pressed: false,
-                right_pressed: false,
-                up_pressed: false,
-                down_pressed: false,
-                shoot_pressed: false,
-            },
-        );
+
 
         world
             .add_system(RenderSystem::new(&window))
             .add_system(EntitySystem::new())
             .add_system(BulletSystem::new())
             .add_system(PlayerSystem {})
-            .add_system(InputSystem {})
             .add_system(CollisionSystem {})
             .add_system(GuiSystem {});
 
@@ -178,7 +132,22 @@ impl ApplicationHandler for App {
                         event_loop.exit();
                         return;
                     }
-                    update_key_state(key, pressed)
+
+                    if let Some(world) = &mut self.world {
+                         world.get_resource_mut::<Input>()
+                        .map(|input| {  
+                            match key {
+                                KeyCode::KeyA => input.left_pressed = pressed,
+                                KeyCode::KeyD => input.right_pressed = pressed,
+                                KeyCode::KeyW => input.up_pressed = pressed,
+                                KeyCode::KeyS => input.down_pressed = pressed,
+                                KeyCode::Space => input.shoot_pressed = pressed,
+                                _ => {}
+                            }
+                        });
+                    }
+
+                    
                 }
             }
             WindowEvent::CloseRequested => {
@@ -192,11 +161,19 @@ impl ApplicationHandler for App {
                 // this event rather than in AboutToWait, since rendering in here allows
                 // the program to gracefully handle redraws requested by the OS.
 
-                update_frame_time();
-
                 // Draw.
 
                 if let Some(world) = &mut self.world {
+                    world.get_resource_mut::<GameState>()
+                        .map(|game_state| {
+                            let now = Instant::now();
+                            if let Some(last_time) = game_state.last_time {
+                                game_state.delta_time = now.duration_since(last_time).as_millis() as f32;
+                            }
+                            game_state.last_time = Some(now);
+                        });
+                 
+
                     world.update();
                 }
 
