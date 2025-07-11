@@ -28,6 +28,9 @@ impl Component for Entity {}
 
 impl Entity {
     pub fn new(name: Option<String>, state: Option<EntityState>) -> Self {
+        let random_value = rand::thread_rng().gen_range(0..=55);
+        let moving_assets_path = format!("enemies/image{:}", random_value);
+
         Entity {
             name: if let Some(name) = name {
                 name
@@ -39,15 +42,17 @@ impl Entity {
             } else {
                 EntityState::Idle
             },
+            
+
 
             animations: HashMap::from([
                 (
                     EntityState::Idle,
-                    Animation::new(get_assets_image_buffer("enemy_idle", 32, 32, 4), 1000.0),
+                    Animation::new(get_assets_image_buffer("enemy_idle", 32, 32, 1), 1000.0),
                 ),
                 (
                     EntityState::Moving,
-                    Animation::new(get_assets_image_buffer("enemy_moving", 32, 32, 4), 1000.0),
+                    Animation::new(get_assets_image_buffer(&moving_assets_path.to_string(), 32, 32, 1), 1000.0),
                 ),
             ]),
         }

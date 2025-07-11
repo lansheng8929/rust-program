@@ -7,12 +7,7 @@ use pixels::{Pixels, SurfaceTexture, wgpu::RequestAdapterOptions};
 use winit::window::Window;
 
 use crate::{
-    EntityTrait, GameState, WINDOW_HEIGHT, WINDOW_WIDTH, animation,
-    bullet::{self, Bullet},
-    entity::{self, Entity},
-    gui::GuiSystem,
-    player::{self, Player},
-    transform::{self, Transform},
+    animation, bullet::{self, Bullet}, collision_box::CollisionBox, entity::{self, Entity}, gui::GuiSystem, player::{self, Player}, transform::{self, Transform}, EntityTrait, GameState, WINDOW_HEIGHT, WINDOW_WIDTH
 };
 
 const FONT: [[u8; 5]; 10] = [
@@ -46,12 +41,14 @@ impl System for RenderSystem {
         if let Some(bullet_ids) = accessor.borrow_ids::<Bullet>(manager) {
             for bullet_id in bullet_ids {
                 let transform = manager.borrow_component::<Transform>(*bullet_id).cloned();
+                let collision_box = manager.borrow_component::<CollisionBox>(*bullet_id).cloned();
                 let bullet = manager.borrow_component_mut::<Bullet>(*bullet_id);
 
-                if let (Some(transform), Some(bullet)) = (transform, bullet) {
+                if let (Some(transform), Some(bullet),Some(collision_box)) = (transform, bullet,collision_box) {
                     if let Some(animation) = bullet.get_animation() {
                         let image_buffer = animation.get_current_frame();
                         self.draw_sprite(&transform, image_buffer);
+                        self.draw_box(&transform, &collision_box);
                         (*animation).update(&delta_time);
                     }
                 }
@@ -61,12 +58,14 @@ impl System for RenderSystem {
         if let Some(players_ids) = accessor.borrow_ids::<Player>(manager) {
             for player_id in players_ids {
                 let transform = manager.borrow_component::<Transform>(*player_id).cloned();
+                let collision_box = manager.borrow_component::<CollisionBox>(*player_id).cloned();
                 let player = manager.borrow_component_mut::<Player>(*player_id);
 
-                if let (Some(transform), Some(player)) = (transform, player) {
+                if let (Some(transform), Some(player),Some(collision_box)) = (transform, player,collision_box) {
                     if let Some(animation) = player.get_animation() {
                         let image_buffer = animation.get_current_frame();
                         self.draw_sprite(&transform, image_buffer);
+                        self.draw_box(&transform, &collision_box);
                         (*animation).update(&delta_time);
                     }
                 }
@@ -76,12 +75,14 @@ impl System for RenderSystem {
         if let Some(entity_ids) = accessor.borrow_ids::<Entity>(manager) {
             for entity_id in entity_ids {
                 let transform = manager.borrow_component::<Transform>(*entity_id).cloned();
+                let collision_box = manager.borrow_component::<CollisionBox>(*entity_id).cloned();
                 let entity = manager.borrow_component_mut::<Entity>(*entity_id);
 
-                if let (Some(transform), Some(entity)) = (transform, entity) {
+                if let (Some(transform), Some(entity),Some(collision_box)) = (transform, entity,collision_box) {
                     if let Some(animation) = entity.get_animation() {
                         let image_buffer = animation.get_current_frame();
                         self.draw_sprite(&transform, image_buffer);
+                        self.draw_box(&transform, &collision_box);
                         (*animation).update(&delta_time);
                     }
                 }
@@ -166,6 +167,50 @@ impl RenderSystem {
                         frame[idx..idx + 4].copy_from_slice(&pixel.0);
                     }
                 }
+            }
+        }
+    }
+
+    fn draw_box(
+        &mut self,
+        transform: &Transform,
+        collision_box: &CollisionBox,
+    ) {
+        if let Some(pixels) = &mut self.pixels {
+            let frame = pixels.frame_mut();
+            let (pos_x, pos_y) = (transform.position.0, transform.position.1);
+            let (width, height) = (collision_box.width as u32, collision_box.height as u32);
+
+            // Draw top and bottom edges
+            for x in 0..width {
+            let frame_x = pos_x as u32 + x;
+            // Top edge
+            if frame_x < WINDOW_WIDTH && (pos_y as u32) < WINDOW_HEIGHT {
+                let idx = ((pos_y as u32 * WINDOW_WIDTH + frame_x) * 4) as usize;
+                frame[idx..idx + 4].copy_from_slice(&[255, 0, 0, 255]);
+            }
+            // Bottom edge
+            let frame_y = pos_y as u32 + height - 1;
+            if frame_x < WINDOW_WIDTH && frame_y < WINDOW_HEIGHT {
+                let idx = ((frame_y * WINDOW_WIDTH + frame_x) * 4) as usize;
+                frame[idx..idx + 4].copy_from_slice(&[255, 0, 0, 255]);
+            }
+            }
+
+            // Draw left and right edges
+            for y in 0..height {
+            let frame_y = pos_y as u32 + y;
+            // Left edge
+            if (pos_x as u32) < WINDOW_WIDTH && frame_y < WINDOW_HEIGHT {
+                let idx = ((frame_y * WINDOW_WIDTH + pos_x as u32) * 4) as usize;
+                frame[idx..idx + 4].copy_from_slice(&[255, 0, 0, 255]);
+            }
+            // Right edge
+            let frame_x = pos_x as u32 + width - 1;
+            if frame_x < WINDOW_WIDTH && frame_y < WINDOW_HEIGHT {
+                let idx = ((frame_y * WINDOW_WIDTH + frame_x) * 4) as usize;
+                frame[idx..idx + 4].copy_from_slice(&[255, 0, 0, 255]);
+            }
             }
         }
     }

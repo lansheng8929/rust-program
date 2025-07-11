@@ -11,7 +11,7 @@ use crate::{
     transform::Transform,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CollisionBox {
     pub width: u32,
     pub height: u32,

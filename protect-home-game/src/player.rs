@@ -18,7 +18,7 @@ use crate::{
 #[derive(PartialEq, Eq, Hash)]
 pub enum PlayerState {
     Idle,
-    Moving,
+    Walking,
 }
 
 pub struct Player {
@@ -40,7 +40,7 @@ impl Player {
             state: if let Some(state) = state {
                 state
             } else {
-                PlayerState::Idle
+                PlayerState::Walking
             },
 
             animations: HashMap::from([
@@ -49,8 +49,8 @@ impl Player {
                     Animation::new(get_assets_image_buffer("player_idle", 32, 32, 4), 1000.0),
                 ),
                 (
-                    PlayerState::Moving,
-                    Animation::new(get_assets_image_buffer("player_moving", 32, 32, 4), 1000.0),
+                    PlayerState::Walking,
+                    Animation::new(get_assets_image_buffer("player/walk/walk", 32, 32, 8), 1000.0),
                 ),
             ]),
         }
