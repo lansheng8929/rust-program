@@ -75,70 +75,74 @@ impl BulletSystem {
         accessor: &mut EntityIdAccessor,
         player_id: &usize,
     ) {
-        let bullet_id = manager.create_entity();
+        let player_transform = manager
+            .borrow_component::<Transform>(*player_id)
+            .cloned()
+            .unwrap();
+        let entity_ids = accessor.borrow_ids::<Entity>(manager).cloned().unwrap();
 
-        if let Some(player_transform) = manager.borrow_component::<Transform>(*player_id) {
-            let player_position = player_transform.position;
+        let player_position = player_transform.position;
 
-            let mut closest_entity_position = None;
-            let mut closest_distance_squared = f32::MAX;
+        let mut closest_entity_position = None;
+        let mut closest_distance_squared = f32::MAX;
 
-            if let Some(entity_ids) = accessor.borrow_ids::<Entity>(manager) {
-                for entity_id in entity_ids.clone() {
-                    if let Some(entity_transform) = manager.borrow_component::<Transform>(entity_id)
-                    {
-                        let dx = entity_transform.position.0 - player_position.0;
-                        let dy = entity_transform.position.1 - player_position.1;
-                        let distance_squared = (dx * dx + dy * dy) as f32;
+        for entity_id in entity_ids.clone() {
+            let entity_transform = manager
+                .borrow_component::<Transform>(entity_id)
+                .cloned()
+                .unwrap();
 
-                        if distance_squared < closest_distance_squared {
-                            closest_distance_squared = distance_squared;
-                            closest_entity_position = Some(entity_transform.position);
-                        }
-                    }
-                }
+            let dx = entity_transform.position.0 - player_position.0;
+            let dy = entity_transform.position.1 - player_position.1;
+            let distance_squared = (dx * dx + dy * dy) as f32;
+
+            if distance_squared < closest_distance_squared {
+                closest_distance_squared = distance_squared;
+                closest_entity_position = Some(entity_transform.position);
             }
+        }
 
-            let speed = 10.0;
-            let velocity = if let Some(target_position) = closest_entity_position {
-                let dx = target_position.0 - player_position.0;
-                let dy = target_position.1 - player_position.1;
-                let magnitude = ((dx * dx + dy * dy) as f32).sqrt();
-                if magnitude > 0.0 {
-                    (dx / magnitude * speed, dy / magnitude * speed)
-                } else {
-                    (0.0, -1.0 * speed)
-                }
+        let speed = 10.0;
+        let velocity = if let Some(target_position) = closest_entity_position {
+            let dx = target_position.0 - player_position.0;
+            let dy = target_position.1 - player_position.1;
+            let magnitude = ((dx * dx + dy * dy) as f32).sqrt();
+            if magnitude > 0.0 {
+                (dx / magnitude * speed, dy / magnitude * speed)
             } else {
                 (0.0, -1.0 * speed)
-            };
+            }
+        } else {
+            (0.0, -1.0 * speed)
+        };
 
-            let magnitude = (velocity.0 * velocity.0 + velocity.1 * velocity.1).sqrt();
-            let direction = if magnitude > 0.0 {
-                (velocity.0 / magnitude, velocity.1 / magnitude)
-            } else {
-                (0.0, -1.0)
-            };
+        let magnitude = (velocity.0 * velocity.0 + velocity.1 * velocity.1).sqrt();
+        let direction = if magnitude > 0.0 {
+            (velocity.0 / magnitude, velocity.1 / magnitude)
+        } else {
+            (0.0, -1.0)
+        };
 
-            manager.add_component_to_entity(bullet_id, Bullet::new(Some(BulletState::Moving)));
+        let bullet_id = manager.create_entity();
 
-            manager.add_component_to_entity(
-                bullet_id,
-                Transform {
-                    position: player_position,
-                    velocity,
-                    direction,
-                },
-            );
+        manager.add_component_to_entity(bullet_id, Bullet::new(Some(BulletState::Moving)));
 
-            manager.add_component_to_entity(
-                bullet_id,
-                CollisionBox {
-                    width: 32,
-                    height: 32,
-                },
-            );
-        }
+        manager.add_component_to_entity(
+            bullet_id,
+            Transform {
+                position: player_position,
+                velocity,
+                direction,
+            },
+        );
+
+        manager.add_component_to_entity(
+            bullet_id,
+            CollisionBox {
+                width: 32,
+                height: 32,
+            },
+        );
 
         if let Some(sound_system) = manager.get_resource_mut::<SoundSystem>() {
             sound_system.play_sound(&SoundEffect::SHOOT, Some(0.5));

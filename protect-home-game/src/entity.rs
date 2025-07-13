@@ -8,7 +8,8 @@ use my_ecs_rust::{
 };
 
 use crate::{
-    animation::Animation, collision_box::CollisionBox, game_state::GameState, transform::Transform, utils::get_assets_image_buffer, EntityTrait, WINDOW_HEIGHT, WINDOW_WIDTH
+    EntityTrait, WINDOW_HEIGHT, WINDOW_WIDTH, animation::Animation, collision_box::CollisionBox,
+    game_state::GameState, transform::Transform, utils::get_assets_image_buffer,
 };
 
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -42,8 +43,6 @@ impl Entity {
             } else {
                 EntityState::Idle
             },
-            
-
 
             animations: HashMap::from([
                 (
@@ -52,7 +51,10 @@ impl Entity {
                 ),
                 (
                     EntityState::Moving,
-                    Animation::new(get_assets_image_buffer(&moving_assets_path.to_string(), 32, 32, 1), 1000.0),
+                    Animation::new(
+                        get_assets_image_buffer(&moving_assets_path.to_string(), 32, 32, 1),
+                        1000.0,
+                    ),
                 ),
             ]),
         }
@@ -82,7 +84,7 @@ impl EntitySystem {
 
     fn spawn_random_enemies(&self, manager: &mut EntityManager) {
         let mut rng = rand::thread_rng();
-        let enemy_count = rng.gen_range(1..10);
+        let enemy_count = rng.gen_range(1..5);
 
         for i in 0..enemy_count {
             let entity_id = manager.create_entity();
