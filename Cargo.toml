@@ -4,4 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace]
-members = ["protect-home-game", "my-ecs-rust"]
+members = ["protect-home-game", "my-ecs-rust", "my-macro"]
+
+[dependencies]
+my-macro = { path = "my-macro" }
