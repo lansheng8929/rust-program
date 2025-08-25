@@ -1,4 +1,5 @@
 use my_macro::CustomDebug;
+use engine_internal::*;
 
 // 自定义声明宏
 macro_rules! my_println {

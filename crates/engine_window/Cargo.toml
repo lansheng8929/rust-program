@@ -1,0 +1,13 @@
+[package]
+name = "engine_window"
+version = "0.0.1"
+edition = "2024"
+
+[dependencies]
+serde = { version = "1.0", features = [
+    "alloc",
+    "derive",
+], default-features = false, optional = true }
+raw-window-handle = { version = "0.6", features = [
+    "alloc",
+], default-features = false }

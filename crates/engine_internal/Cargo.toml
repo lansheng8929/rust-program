@@ -1,0 +1,8 @@
+[package]
+name = "engine_internal"
+version = "0.0.1"
+edition = "2024"
+
+[dependencies]
+engine_winit = { path = "../engine_winit" }
+engine_window = { path = "../engine_window" }

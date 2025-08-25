@@ -1,10 +1,11 @@
 [package]
 name = "rust-program"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2024"
 
 [workspace]
-members = ["protect-home-game", "my-ecs-rust", "my-macro"]
+members = ["crates/*", "protect-home-game", "my-ecs-rust", "my-macro"]
 
 [dependencies]
 my-macro = { path = "my-macro" }
+engine_internal = { path = "crates/engine_internal" }
