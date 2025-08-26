@@ -6,3 +6,5 @@ edition = "2024"
 [dependencies]
 engine_winit = { path = "../engine_winit" }
 engine_window = { path = "../engine_window" }
+engine_ecs = { path = "../engine_ecs" }
+engine_platform = { path = "../engine_platform" }

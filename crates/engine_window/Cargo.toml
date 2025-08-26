@@ -11,3 +11,6 @@ serde = { version = "1.0", features = [
 raw-window-handle = { version = "0.6", features = [
     "alloc",
 ], default-features = false }
+engine_ecs = { path = "../engine_ecs" }
+engine_platform = { path = "../engine_platform" }
+engine_window = { path = "../engine_window" }
