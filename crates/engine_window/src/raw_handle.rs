@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::{any::Any, marker::PhantomData, ops::Deref};
 
 use engine_ecs::component::Component;
-use engine_platform::sync::Mutex;
+use engine_platform::prelude::Mutex;
 use raw_window_handle::{
     DisplayHandle, HandleError, HasDisplayHandle, HasWindowHandle, RawDisplayHandle,
     RawWindowHandle, WindowHandle,

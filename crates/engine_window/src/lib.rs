@@ -1,4 +1,9 @@
 extern crate alloc;
 
-pub mod raw_handle;
-pub mod winit_windows;
+ mod raw_handle;
+ mod window;
+
+pub mod prelude {
+    pub use super::window::*;
+    pub use super::raw_handle::*;
+}

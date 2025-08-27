@@ -1,0 +1,10 @@
+[package]
+name = "engine_math"
+version = "0.0.1"
+edition = "2024"
+
+[dependencies]
+glam = { version = "0.30.1", default-features = false, features = [
+    "bytemuck",
+    "std",
+] }

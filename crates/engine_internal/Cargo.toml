@@ -8,3 +8,5 @@ engine_winit = { path = "../engine_winit" }
 engine_window = { path = "../engine_window" }
 engine_ecs = { path = "../engine_ecs" }
 engine_platform = { path = "../engine_platform" }
+engine_math = { path = "../engine_math" }
+engine_app = { path = "../engine_app" }

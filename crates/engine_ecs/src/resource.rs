@@ -1,6 +1,9 @@
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
 
+/// Resource trait marker
+pub trait Resource: 'static {}
+
 pub struct ResourceManager {
     resources: HashMap<TypeId, Box<dyn Any>>,
 }
