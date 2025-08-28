@@ -4,9 +4,12 @@ version = "0.0.1"
 edition = "2024"
 
 [dependencies]
-winit = { version = "0.30", default-features = false, features = [
-    "rwh_06",
-    "x11",
-] }
+winit = { version = "0.30", default-features = false, features = ["rwh_06"] }
 engine_ecs = { path = "../engine_ecs" }
 engine_window = { path = "../engine_window" }
+engine_app = { path = "../engine_app" }
+
+[features]
+default = ["x11"]
+
+x11 = ["winit/x11"]

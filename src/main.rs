@@ -1,5 +1,5 @@
 use my_macro::CustomDebug;
-use engine_internal::*;
+use engine_internal::prelude::*;
 
 // 自定义声明宏
 macro_rules! my_println {
@@ -19,7 +19,29 @@ struct Test {
     b: String,
 }
 
-fn main() {
-    let t = Test { a: 42,b: "Hello".to_string() };
-    println!("{:?}", t)
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+
+    
+    let mut app = App::new();
+
+    app.add_plugin(HelloWorldPlugin);
+    let mut winit_plugin = WinitPlugin::<WakeUp>::default();
+    winit_plugin.run_on_any_thread = true;
+    app.add_plugin(winit_plugin);
+
+    // 注册组件
+    app.world_mut().register_component::<Window>(); 
+    // 创建实体
+    let window_id = app.world_mut().create_entity();
+    // 创建组件
+    let window = Window {
+        title: "This is window 0!".to_string(),
+        ..Default::default()
+    };
+    // 添加组件到实体
+    app.world_mut().add_component_to_entity(window_id, window);
+
+    app.run();
+
+    Ok(())
 }

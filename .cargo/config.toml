@@ -1,0 +1,2 @@
+[alias]
+test-x11 = "test test_window_title --target x86_64-unknown-linux-gnu --features x11 -- --exact"

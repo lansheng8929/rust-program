@@ -17,6 +17,18 @@ impl World {
         }
     }
 
+    pub fn query<T: 'static + Component>(& mut self) -> Vec<&T> {
+        let mut result = Vec::new();
+        if let Some(ids) = self.entity_id_accessor.borrow_ids::<T>(&self.entity_manager) {
+            for &id in ids {
+                if let Some(component) = self.entity_manager.borrow_component::<T>(id) {
+                    result.push(component);
+                }
+            }
+        }
+        result
+    }
+
     pub fn create_entity(&mut self) -> usize {
         self.entity_manager.create_entity()
     }

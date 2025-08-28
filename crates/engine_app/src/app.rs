@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use engine_ecs::prelude::*;
 
 /// 插件特征
@@ -24,65 +23,6 @@ pub enum AppExit {
 impl Default for AppExit {
     fn default() -> Self {
         Self::Success
-    }
-}
-
-/// 简化的调度器
-pub struct Schedule {
-    systems: Vec<Box<dyn FnMut() + Send + Sync>>,
-}
-
-impl Schedule {
-    pub fn new() -> Self {
-        Self {
-            systems: Vec::new(),
-        }
-    }
-    
-    pub fn add_system<F>(&mut self, system: F) 
-    where 
-        F: FnMut() + Send + Sync + 'static,
-    {
-        self.systems.push(Box::new(system));
-    }
-    
-    pub fn run(&mut self) {
-        for system in &mut self.systems {
-            system();
-        }
-    }
-}
-
-/// 简化的世界
-pub struct World {
-    schedules: HashMap<String, Schedule>,
-    resources: ResourceManager,
-}
-
-impl World {
-    pub fn new() -> Self {
-        Self {
-            schedules: HashMap::new(),
-            resources: ResourceManager::new(),
-        }
-    }
-    
-    pub fn add_schedule(&mut self, name: String, schedule: Schedule) {
-        self.schedules.insert(name, schedule);
-    }
-    
-    pub fn run_schedule(&mut self, name: &str) {
-        if let Some(schedule) = self.schedules.get_mut(name) {
-            schedule.run();
-        }
-    }
-    
-    pub fn get_schedule_mut(&mut self, name: &str) -> Option<&mut Schedule> {
-        self.schedules.get_mut(name)
-    }
-    
-    pub fn insert_resource<R: Resource>(&mut self, resource: R) {
-        self.resources.add(resource);
     }
 }
 
@@ -121,21 +61,6 @@ impl App {
         self
     }
     
-    /// 添加系统到指定调度器
-    pub fn add_system<F>(&mut self, schedule_name: &str, system: F) -> &mut Self 
-    where 
-        F: FnMut() + Send + Sync + 'static,
-    {
-        if let Some(schedule) = self.world.get_schedule_mut(schedule_name) {
-            schedule.add_system(system);
-        } else {
-            let mut new_schedule = Schedule::new();
-            new_schedule.add_system(system);
-            self.world.add_schedule(schedule_name.to_string(), new_schedule);
-        }
-        self
-    }
-    
     /// 运行应用程序
     pub fn run(&mut self) -> AppExit {
         // 构建所有插件
@@ -152,11 +77,24 @@ impl App {
             self.run_once()
         }
     }
+
+    /// 设置一个持续运行的 runner
+    pub fn set_loop_runner(&mut self) -> &mut Self {
+        self.set_runner(|mut app| {
+            loop {
+                let exit = app.run_once();
+                if exit != AppExit::Success {
+                    return exit;
+                }
+                // 可以在这里添加帧率控制或事件处理
+            }
+        })
+    }
     
     /// 运行一次更新
     pub fn run_once(&mut self) -> AppExit {
-        // 运行主调度器
-        self.world.run_schedule("main");
+        // 更新 ECS 世界（运行所有系统）
+        self.world.update();
         AppExit::Success
     }
     
@@ -174,13 +112,16 @@ impl App {
         &mut self.world
     }
     
-    /// 插入资源
-    pub fn insert_resource<R: Resource>(&mut self, resource: R) -> &mut Self {
-        self.world.insert_resource(resource);
-        self
+}
+
+
+// 示例系统结构体
+pub struct HelloWorldSystem;
+
+impl System for HelloWorldSystem {
+    fn update(&mut self, _manager: &mut EntityManager, _accessor: &mut EntityIdAccessor) {
+        println!("Hello, World!");
     }
-
-
 }
 
 // 示例插件
@@ -188,9 +129,7 @@ pub struct HelloWorldPlugin;
 
 impl Plugin for HelloWorldPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system("main", || {
-            println!("Hello, World!");
-        });
+        app.world_mut().add_system(HelloWorldSystem);
     }
 }
 
@@ -213,12 +152,119 @@ mod tests {
 
     #[test]
     fn test_system_addition() {
-        let mut app = App::new();
-        app.add_system("test", || {
-            println!("Test system");
-        });
+        struct TestSystem;
         
-        // 验证调度器已创建
-        assert!(app.world.schedules.contains_key("test"));
+        impl System for TestSystem {
+            fn update(&mut self, _manager: &mut EntityManager, _accessor: &mut EntityIdAccessor) {
+                println!("Test system");
+            }
+        }
+        
+        let mut app = App::new();
+        app.world_mut().add_system(TestSystem);
+        
+        // 测试系统添加成功（没有直接验证方式，但不应该崩溃）
+        app.run_once();
+    }
+
+    #[test]
+    fn test_set_runner_error() {
+        struct ExitSystem;
+        impl System for ExitSystem {
+            fn update(&mut self, _manager: &mut EntityManager, _accessor: &mut EntityIdAccessor) {
+                println!("Exit system triggered");
+            }
+        }
+
+        struct ErrorPlugin;
+        impl Plugin for ErrorPlugin {
+            fn build(&self, app: &mut App) {
+                app.world_mut().add_system(ExitSystem);
+            }
+        }
+
+        let mut app = App::new();
+        app.add_plugin(ErrorPlugin);
+        app.set_runner(|mut app| {
+            let mut count = 0;
+            loop {
+                let exit = app.run_once();
+                count += 1;
+                if count >= 3 {
+                    return AppExit::Error(42);
+                }
+                if exit != AppExit::Success {
+                    return exit;
+                }
+            }
+        });
+
+        let result = app.run();
+        assert_eq!(result, AppExit::Error(42));
+    }
+
+    #[test]
+    fn test_set_runner_success() {
+        let mut app = App::new();
+        use std::rc::Rc;
+        use std::cell::RefCell;
+
+        let called = Rc::new(RefCell::new(false));
+        struct DummySystem {
+            count: u32,
+            called: Rc<RefCell<bool>>,
+        }
+        impl System for DummySystem {
+            fn update(&mut self, _manager: &mut EntityManager, _accessor: &mut EntityIdAccessor) {
+                self.count += 1;
+                *self.called.borrow_mut() = true;
+                println!("Dummy system called {} times", self.count);
+            }
+        }
+        app.world_mut().add_system(DummySystem {count: 0, called: Rc::clone(&called) });
+        // 设置循环运行器，但run_once总是返回Success，会无限循环，这里人为终止
+        app.set_runner(|mut app| {
+            let mut count = 0;
+            loop {
+                let exit = app.run_once();
+                count += 1;
+                if count >= 50 {
+                    return exit;
+                }
+                if exit != AppExit::Success {
+                    return exit;
+                }
+            }
+        });
+        let result = app.run();
+        assert_eq!(result, AppExit::Success);
+        assert!(*called.borrow());
+    }
+
+    #[test]
+    fn text_set_loop_runner() {
+
+        let mut app = App::new();
+        use std::rc::Rc;
+        use std::cell::RefCell;
+
+        let called = Rc::new(RefCell::new(false));
+        struct DummySystem {
+            count: u32,
+            called: Rc<RefCell<bool>>,
+        }
+        impl System for DummySystem {
+            fn update(&mut self, _manager: &mut EntityManager, _accessor: &mut EntityIdAccessor) {
+                self.count += 1;
+                *self.called.borrow_mut() = true;
+                println!("Dummy system called {} times", self.count);
+            }
+        }
+        app.world_mut().add_system(DummySystem {count: 0, called: Rc::clone(&called) });
+        // 设置循环运行器，但run_once总是返回Success，会无限循环，这里人为终止
+        app.set_loop_runner();
+        let result = app.run();
+        assert_eq!(result, AppExit::Success);
+        assert!(*called.borrow());
     }
 }

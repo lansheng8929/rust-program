@@ -9,3 +9,10 @@ members = ["crates/*", "protect-home-game", "my-ecs-rust", "my-macro"]
 [dependencies]
 my-macro = { path = "my-macro" }
 engine_internal = { path = "crates/engine_internal" }
+
+[features]
+default = ["engine_winit", "x11"]
+
+engine_winit = ["engine_internal/engine_winit"]
+
+x11 = ["engine_internal/x11"]

@@ -42,6 +42,10 @@ impl Default for Window {
     }
 }
 
+impl Component for Window  {
+    
+}
+
 impl Window {
     /// 获取窗口逻辑宽度
     pub fn width(&self) -> f32 {
