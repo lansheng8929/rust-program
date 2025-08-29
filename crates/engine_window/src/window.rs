@@ -1,6 +1,6 @@
 
-use engine_ecs::{entity::Entity, component::Component};
-use engine_math::prelude::{Vec2, UVec2};
+use engine_ecs::prelude::*;
+use engine_math::prelude::*;
 
 /// 标记主窗口组件
 #[derive(Default, Debug, Copy, Clone)]

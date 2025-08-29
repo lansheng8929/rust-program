@@ -1,17 +1,6 @@
 use engine_ecs::prelude::*;
 
-/// 插件特征
-pub trait Plugin {
-    fn name(&self) -> &str {
-        std::any::type_name::<Self>()
-    }
-    
-    fn build(&self, app: &mut App);
-    
-    fn is_unique(&self) -> bool {
-        true
-    }
-}
+use crate::plugin::*;
 
 /// 应用程序退出类型
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -31,11 +20,12 @@ pub struct App {
     world: World,
     plugins: Vec<Box<dyn Plugin>>,
     runner: Option<Box<dyn FnOnce(App) -> AppExit>>,
+    plugins_state: PluginsState,
 }
 
 impl std::fmt::Debug for App {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "App {{ plugins: {} }}", self.plugins.len())
+        write!(f, "App {{ plugins: {}, state: {:?} }}", self.plugins.len(), self.plugins_state)
     }
 }
 
@@ -52,12 +42,27 @@ impl App {
             world: World::new(),
             plugins: Vec::new(),
             runner: None,
+            plugins_state: PluginsState::Adding,
         }
     }
     
     /// 添加插件
     pub fn add_plugin<P: Plugin + 'static>(&mut self, plugin: P) -> &mut Self {
         self.plugins.push(Box::new(plugin));
+        self
+    }
+    
+    /// 添加已装箱的插件 (用于插件组)
+    pub fn add_plugins<M>(&mut self, plugins: impl Plugins<M>) -> &mut Self {
+        if matches!(
+            self.plugins_state(),
+            PluginsState::Cleaned | PluginsState::Finished
+        ) {
+            panic!(
+                "Plugins cannot be added after App::cleanup() or App::finish() has been called."
+            );
+        }
+        plugins.add_to_app(self);
         self
     }
     
@@ -68,6 +73,8 @@ impl App {
         for plugin in plugins {
             plugin.build(self);
         }
+        
+        self.plugins_state = PluginsState::Ready;
         
         // 运行主循环
         if let Some(runner) = self.runner.take() {
@@ -112,6 +119,20 @@ impl App {
         &mut self.world
     }
     
+    /// 获取插件状态
+    pub fn plugins_state(&self) -> PluginsState {
+        self.plugins_state.clone()
+    }
+    
+    /// 清理应用程序
+    pub fn cleanup(&mut self) {
+        self.plugins_state = PluginsState::Cleaned;
+    }
+    
+    /// 完成应用程序
+    pub fn finish(&mut self) {
+        self.plugins_state = PluginsState::Finished;
+    }
 }
 
 
@@ -266,5 +287,38 @@ mod tests {
         let result = app.run();
         assert_eq!(result, AppExit::Success);
         assert!(*called.borrow());
+    }
+
+    #[test]
+    fn test_plugins_state_management() {
+        let mut app = App::new();
+        assert_eq!(app.plugins_state(), PluginsState::Adding);
+        
+        app.cleanup();
+        assert_eq!(app.plugins_state(), PluginsState::Cleaned);
+    }
+
+    #[test]
+    #[should_panic(expected = "Plugins cannot be added after App::cleanup() or App::finish() has been called.")]
+    fn test_add_plugins_after_cleanup() {
+        let mut app = App::new();
+        app.cleanup();
+        app.add_plugins(HelloWorldPlugin);
+    }
+
+    #[test]
+    #[should_panic(expected = "Plugins cannot be added after App::cleanup() or App::finish() has been called.")]
+    fn test_add_plugins_after_finish() {
+        let mut app = App::new();
+        app.finish();
+        app.add_plugins(HelloWorldPlugin);
+    }
+
+    #[test]
+    fn test_add_plugins_with_vec() {
+        let mut app = App::new();
+        let plugins = vec![HelloWorldPlugin, HelloWorldPlugin];
+        app.add_plugins(plugins);
+        assert_eq!(app.plugins.len(), 2);
     }
 }

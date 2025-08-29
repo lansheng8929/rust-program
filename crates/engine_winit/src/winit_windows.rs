@@ -1,7 +1,7 @@
 
 use std::collections::HashMap;
-use engine_ecs::entity::Entity;
-use engine_window::prelude::WindowWrapper;
+use engine_ecs::prelude::*;
+use engine_window::prelude::*;
 use winit::window::{Window as WinitWindow, WindowId};
 use winit::dpi::LogicalSize;
 use winit::event_loop::ActiveEventLoop;

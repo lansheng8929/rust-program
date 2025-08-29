@@ -20,14 +20,9 @@ struct Test {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-
-    
     let mut app = App::new();
 
-    app.add_plugin(HelloWorldPlugin);
-    let mut winit_plugin = WinitPlugin::<WakeUp>::default();
-    winit_plugin.run_on_any_thread = true;
-    app.add_plugin(winit_plugin);
+    app.add_plugins(MinimalPlugins);
 
     // 注册组件
     app.world_mut().register_component::<Window>(); 
