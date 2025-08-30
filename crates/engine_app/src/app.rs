@@ -52,7 +52,6 @@ impl App {
         self
     }
     
-    /// 添加已装箱的插件 (用于插件组)
     pub fn add_plugins<M>(&mut self, plugins: impl Plugins<M>) -> &mut Self {
         if matches!(
             self.plugins_state(),
@@ -63,6 +62,35 @@ impl App {
             );
         }
         plugins.add_to_app(self);
+        self
+    }
+
+    pub fn add_boxed_plugin(
+        &mut self,
+        plugin: Box<dyn Plugin>,
+    ) -> &mut Self {
+        // 检查插件状态，确保不能在清理或完成后添加插件
+        if matches!(
+            self.plugins_state(),
+            PluginsState::Cleaned | PluginsState::Finished
+        ) {
+            panic!(
+                "Plugins cannot be added after App::cleanup() or App::finish() has been called."
+            );
+        }
+        
+        // 检查插件唯一性
+        if plugin.is_unique() {
+            let plugin_name = plugin.name();
+            for existing_plugin in &self.plugins {
+                if existing_plugin.name() == plugin_name {
+                    panic!("Plugin '{}' was added multiple times but is unique", plugin_name);
+                }
+            }
+        }
+        
+        // 添加插件到列表
+        self.plugins.push(plugin);
         self
     }
     
@@ -303,7 +331,7 @@ mod tests {
     fn test_add_plugins_after_cleanup() {
         let mut app = App::new();
         app.cleanup();
-        app.add_plugins(HelloWorldPlugin);
+        app.add_plugins::<()>(HelloWorldPlugin);
     }
 
     #[test]
@@ -311,7 +339,7 @@ mod tests {
     fn test_add_plugins_after_finish() {
         let mut app = App::new();
         app.finish();
-        app.add_plugins(HelloWorldPlugin);
+        app.add_plugins::<()>(HelloWorldPlugin);
     }
 
     #[test]

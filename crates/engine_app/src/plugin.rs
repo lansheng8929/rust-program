@@ -1,4 +1,4 @@
-use crate::app::App;
+use crate::{app::App, prelude::PluginGroup};
 
 pub trait Plugin {
     fn name(&self) -> &str {
@@ -27,6 +27,9 @@ pub trait Plugins<M> {
     fn add_to_app(self, app: &mut App);
 }
 
+pub struct PluginMarker;
+pub struct PluginGroupMarker;
+
 impl<P: Plugin + 'static> Plugins<()> for P {
     fn add_to_app(self, app: &mut App) {
         app.add_plugin(self);
@@ -40,3 +43,21 @@ impl<P: Plugin + 'static> Plugins<()> for Vec<P> {
         }
     }
 }
+
+impl Plugins<()> for Box<dyn Plugin> {
+    fn add_to_app(self, app: &mut App) {
+        app.add_boxed_plugin(self);
+    }
+}
+
+impl<P: Plugin + 'static> Plugins<PluginMarker> for P {
+    fn add_to_app(self, app: &mut App) {
+        app.add_boxed_plugin(Box::new(self));
+    }
+}
+
+ impl<P: PluginGroup> Plugins<PluginGroupMarker> for P {
+    fn add_to_app(self, app: &mut App) {
+            self.build().finish(app);
+    }
+}   

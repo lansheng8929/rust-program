@@ -2,7 +2,7 @@ use std::any::TypeId;
 use std::collections::HashMap;
 
 use crate::app::App;
-use crate::plugin::Plugin;
+use crate::plugin::{Plugin, Plugins};
 
 
 /// 简化的插件组宏
@@ -139,18 +139,6 @@ impl PluginGroupBuilder {
         self
     }
 
-    /// 完成构建，将所有启用的插件添加到应用
-    pub fn finish(mut self, app: &mut App) {
-        for type_id in self.order {
-            if let Some(entry) = self.plugins.remove(&type_id) {
-                if entry.enabled {
-                    println!("Adding plugin: {}", entry.plugin.name());
-                    app.add_plugins(entry.plugin);
-                }
-            }
-        }
-    }
-
     /// 获取插件数量
     pub fn len(&self) -> usize {
         self.plugins.len()
@@ -165,11 +153,28 @@ impl PluginGroupBuilder {
     pub fn group_name(&self) -> &str {
         &self.group_name
     }
+    
+    /// 完成构建，将所有启用的插件添加到应用
+    pub fn finish(self, app: &mut App) {
+        for type_id in self.order {
+            if let Some(entry) = self.plugins.get(&type_id) {
+                if entry.enabled {
+                    entry.plugin.build(app);
+                }
+            }
+        }
+    }
 }
 
 impl PluginGroup for PluginGroupBuilder {
     fn build(self) -> PluginGroupBuilder {
         self
+    }
+}
+
+impl Plugins<()> for PluginGroupBuilder {
+    fn add_to_app(self, app: &mut App) {
+        self.finish(app);
     }
 }
 
