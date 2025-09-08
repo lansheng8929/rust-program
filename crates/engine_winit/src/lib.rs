@@ -77,10 +77,10 @@ impl<T: BufferedEvent> ApplicationHandler<T> for WinitAppRunnerState<T> {
 // Winit 运行器函数
 pub fn winit_runner<T: BufferedEvent>(mut app: App, event_loop: EventLoop<T>) -> AppExit {
     // 检查插件状态，如果准备好则执行收尾和清理
-    // if app.plugins_state() == PluginsState::Ready {
-    //     app.finish();
-    //     app.cleanup();
-    // }
+    if app.plugins_state() == PluginsState::Ready {
+        app.finish();
+        app.cleanup();
+    }
 
     // 将事件循环代理插入资源
     app.world_mut()

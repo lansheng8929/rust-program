@@ -1,11 +1,11 @@
- mod component;
- mod component_manager;
- mod entity;
- mod entity_manager;
- mod resource;
- mod system;
- mod world;
-
+mod component;
+mod component_manager;
+mod entity;
+mod entity_manager;
+mod resource;
+mod system;
+mod world;
+mod event;
 
 pub mod prelude {
     pub use super::component::*;
