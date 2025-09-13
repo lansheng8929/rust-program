@@ -19,10 +19,8 @@ impl<T: 'static> Resource for EventLoopProxyWrapper<T> {
 }
 
 // 标记事件类型的特征，确保事件可以在线程间传递
-pub trait BufferedEvent: Send + Sync + 'static {}
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy,BufferedEvent)]
 pub struct WakeUp;
-impl BufferedEvent for WakeUp {}
 
 // Winit 应用程序运行状态
 pub struct WinitAppRunnerState<T: BufferedEvent> {

@@ -15,4 +15,5 @@ pub mod prelude {
     pub use super::resource::*;
     pub use super::system::*;
     pub use super::world::*;
+    pub use super::event::*;
 }

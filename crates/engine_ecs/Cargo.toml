@@ -4,4 +4,4 @@ version = "0.0.1"
 edition = "2024"
 
 [dependencies]
-# bevy_ecs_macros = { path = "macros", version = "0.0.1" }
+engine_ecs_macros = { path = "macros", version = "0.0.1" }

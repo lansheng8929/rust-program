@@ -1,7 +1,8 @@
 extern crate alloc;
 
- mod raw_handle;
- mod window;
+mod raw_handle;
+mod window;
+mod event;
 
 pub mod prelude {
     pub use super::window::*;

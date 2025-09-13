@@ -79,7 +79,6 @@ pub(crate) struct EventSequence<E: BufferedEvent> {
 }
 
 
-
 pub struct Events<E: BufferedEvent> {
     pub(crate) events: EventSequence<E>,
 }

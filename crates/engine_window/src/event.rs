@@ -28,4 +28,4 @@ pub struct WindowScaleFactorChanged {
     pub window: Entity,
     /// The new scale factor.
     pub scale_factor: f64,
-}   
+}
