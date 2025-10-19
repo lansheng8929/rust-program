@@ -20,7 +20,11 @@ pub struct WinitWindows {
 impl WinitWindows {
     /// 创建新的窗口管理器
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            windows: HashMap::new(),
+            entity_to_winit: HashMap::new(),
+            winit_to_entity: HashMap::new(),
+        }
     }
 
     /// 创建新的 winit 窗口并关联到实体
@@ -28,24 +32,41 @@ impl WinitWindows {
         &mut self,
         event_loop: &ActiveEventLoop,
         entity: Entity,
-        title: &str,
-        width: f32,
-        height: f32,
-        visible: bool,
+        window: &Window,
     ) -> &WindowWrapper<WinitWindow> {
-        // 创建基本窗口属性
-        let mut attributes = WinitWindow::default_attributes()
-            .with_title(title)
-            .with_inner_size(LogicalSize::new(width, height))
-            .with_visible(false); // 先设为不可见，创建完成后再显示
+
+        let mut winit_window_attributes = WinitWindow::default_attributes();
+
+        winit_window_attributes = winit_window_attributes
+            .with_title(&window.title)
+            .with_inner_size(LogicalSize::new(window.width(), window.height()))
+            .with_visible(false) // 先设为不可见，创建完成后再显示
+            .with_resizable(window.resizable)
+            .with_decorations(window.decorations)
+            .with_transparent(window.transparent);
+
+        #[cfg(target_os = "macos")]
+        {
+            use winit::platform::macos::WindowAttributesExtMacOS;
+
+            winit_window_attributes = winit_window_attributes
+                // 允许通过拖动窗口背景移动窗口
+                .with_movable_by_window_background(true)
+                // 窗口阴影
+                .with_has_shadow(true)
+                // 如果没有装饰，隐藏标题栏
+                .with_titlebar_hidden(!window.decorations)
+                // 标题栏透明度（可根据需要调整）
+                .with_titlebar_transparent(window.transparent);
+        }
 
         // 创建窗口
         let winit_window = event_loop
-            .create_window(attributes)
+            .create_window(winit_window_attributes)
             .expect("Failed to create window");
 
         // 设置可见性
-        winit_window.set_visible(visible);
+        winit_window.set_visible(window.visible);
 
         let window_id = winit_window.id();
 
@@ -85,6 +106,5 @@ impl WinitWindows {
         self.windows.remove(&winit_id)
     }
 
-    
-}
 
+}

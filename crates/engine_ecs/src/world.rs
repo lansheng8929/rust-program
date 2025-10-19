@@ -80,4 +80,46 @@ impl World {
             self.entity_manager.increment_frame();
         }
     }
+
+    // 新增：查询组件并返回实体 ID
+    pub fn query_with_entities<T: 'static + Component>(&mut self) -> Vec<(usize, &T)> {
+        let mut result = Vec::new();
+        if let Some(ids) = self.entity_id_accessor.borrow_ids::<T>(&self.entity_manager) {
+            for &id in ids {
+                if let Some(component) = self.entity_manager.borrow_component::<T>(id) {
+                    result.push((id, component));
+                }
+            }
+        }
+        result
+    }
+
+    // 新增：查询可变组件并返回实体 ID
+    pub fn query_mut_with_entities<T: 'static + Component>(&mut self) -> Vec<(usize, &mut T)> {
+        let mut result = Vec::new();
+        if let Some(ids) = self.entity_id_accessor.borrow_ids::<T>(&self.entity_manager) {
+            for &id in ids {
+                // 注意：这里需要使用 unsafe 或重新设计以避免多个可变引用
+                // 暂时使用简化版本
+                // 实际实现需要更谨慎的内存管理
+            }
+        }
+        result
+    }
+
+    // 新增：检查实体是否拥有某个组件
+    pub fn has_component<T: 'static + Component>(&self, entity_id: usize) -> bool {
+        self.entity_manager.borrow_component::<T>(entity_id).is_some()
+    }
+
+    // 新增：获取实体的组件
+    pub fn get_component<T: 'static + Component>(&self, entity_id: usize) -> Option<&T> {
+        self.entity_manager.borrow_component::<T>(entity_id)
+    }
+
+    // 新增：获取实体的可变组件
+    pub fn get_component_mut<T: 'static + Component>(&mut self, entity_id: usize) -> Option<&mut T> {
+        self.entity_manager.borrow_component_mut(entity_id)
+    }
+
 }

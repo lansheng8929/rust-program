@@ -7,7 +7,7 @@ use engine_math::prelude::*;
 pub struct PrimaryWindow;
 
 impl Component for PrimaryWindow {
-    
+
 }
 
 /// 窗口引用（主窗口或指定实体窗口）
@@ -43,7 +43,7 @@ impl Default for Window {
 }
 
 impl Component for Window  {
-    
+
 }
 
 impl Window {

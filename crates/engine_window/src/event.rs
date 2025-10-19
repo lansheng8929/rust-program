@@ -1,8 +1,23 @@
+use engine_ecs::prelude::*;
 
+#[derive(BufferedEvent, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AppLifecycle {
+    /// The application is not started yet.
+    Idle,
+    /// The application is running.
+    Running,
+    /// The application is going to be suspended.
+    /// Applications have one frame to react to this event before being paused in the background.
+    WillSuspend,
+    /// The application was suspended.
+    Suspended,
+    /// The application is going to be resumed.
+    /// Applications have one extra frame to react to this event before being fully resumed.
+    WillResume,
+}
 
-pub struct EventWriter<'w, E: BufferedEvent> {
-    #[system_param(validation_message = "BufferedEvent not initialized")]
-    events: ResMut<'w, Events<E>>,
+pub struct EventWriter<E: BufferedEvent> {
+    events: Events<E>,
 }
 
 pub struct WindowResized {

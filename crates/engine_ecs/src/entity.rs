@@ -29,4 +29,18 @@ impl Entity {
 	pub fn reset(&mut self) {
 		self.alive = true;
 	}
+
+	/// 从原始 ID 创建 Entity（用于与 ECS 系统的 usize entity_id 兼容）
+	pub fn from_raw(id: usize) -> Self {
+		Entity {
+			id: id as u32,
+			alive: true,
+		}
+	}
+
+	/// 获取原始 ID（作为 usize）
+	pub fn to_raw(&self) -> usize {
+		self.id as usize
+	}
+
 }

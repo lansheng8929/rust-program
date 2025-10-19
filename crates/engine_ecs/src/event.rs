@@ -2,7 +2,10 @@ use std::marker::PhantomData;
 use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
 use std::ops::{Deref, DerefMut};
+
+pub use engine_ecs_macros::{BufferedEvent};
 pub trait BufferedEvent: Send + Sync + 'static {}
+
 
 pub struct EventId<E: BufferedEvent> {
     pub id: usize,

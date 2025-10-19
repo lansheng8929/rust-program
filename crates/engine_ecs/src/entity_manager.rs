@@ -11,7 +11,7 @@ use super::component_manager::{
 };
 use super::entity::Entity;
 
-struct Entities {
+pub struct Entities {
     entities: Vec<Entity>,
     availables: Vec<usize>,
 }

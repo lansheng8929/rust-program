@@ -45,13 +45,13 @@ impl App {
             plugins_state: PluginsState::Adding,
         }
     }
-    
+
     /// 添加插件
     pub fn add_plugin<P: Plugin + 'static>(&mut self, plugin: P) -> &mut Self {
         self.plugins.push(Box::new(plugin));
         self
     }
-    
+
     pub fn add_plugins<M>(&mut self, plugins: impl Plugins<M>) -> &mut Self {
         if matches!(
             self.plugins_state(),
@@ -78,7 +78,7 @@ impl App {
                 "Plugins cannot be added after App::cleanup() or App::finish() has been called."
             );
         }
-        
+
         // 检查插件唯一性
         if plugin.is_unique() {
             let plugin_name = plugin.name();
@@ -88,12 +88,12 @@ impl App {
                 }
             }
         }
-        
+
         // 添加插件到列表
         self.plugins.push(plugin);
         self
     }
-    
+
     /// 运行应用程序
     pub fn run(&mut self) -> AppExit {
         // 构建所有插件
@@ -101,9 +101,9 @@ impl App {
         for plugin in plugins {
             plugin.build(self);
         }
-        
+
         self.plugins_state = PluginsState::Ready;
-        
+
         // 运行主循环
         if let Some(runner) = self.runner.take() {
             let app = std::mem::replace(self, App::new());
@@ -125,41 +125,59 @@ impl App {
             }
         })
     }
-    
+
     /// 运行一次更新
     pub fn run_once(&mut self) -> AppExit {
         // 更新 ECS 世界（运行所有系统）
         self.world.update();
         AppExit::Success
     }
-    
+
     /// 设置自定义运行器
-    pub fn set_runner<F>(&mut self, runner: F) -> &mut Self 
+    pub fn set_runner<F>(&mut self, runner: F) -> &mut Self
     where
         F: FnOnce(App) -> AppExit + 'static,
     {
         self.runner = Some(Box::new(runner));
         self
     }
-    
+
     /// 获取世界的可变引用
     pub fn world_mut(&mut self) -> &mut World {
         &mut self.world
     }
-    
+
     /// 获取插件状态
     pub fn plugins_state(&self) -> PluginsState {
         self.plugins_state.clone()
     }
-    
+
     /// 清理应用程序
     pub fn cleanup(&mut self) {
         self.plugins_state = PluginsState::Cleaned;
     }
-    
+
     /// 完成应用程序
     pub fn finish(&mut self) {
         self.plugins_state = PluginsState::Finished;
+    }
+
+    pub fn should_exit(&self) -> Option<AppExit> {
+        // let mut reader = EventCursor::default();
+
+        // let events = self.world().get_resource::<Events<AppExit>>()?;
+        // let mut events = reader.read(events);
+
+        // if events.len() != 0 {
+        //     return Some(
+        //         events
+        //             .find(|exit| exit.is_error())
+        //             .cloned()
+        //             .unwrap_or(AppExit::Success),
+        //     );
+        // }
+
+        None
     }
 }
 
@@ -202,16 +220,16 @@ mod tests {
     #[test]
     fn test_system_addition() {
         struct TestSystem;
-        
+
         impl System for TestSystem {
             fn update(&mut self, _manager: &mut EntityManager, _accessor: &mut EntityIdAccessor) {
                 println!("Test system");
             }
         }
-        
+
         let mut app = App::new();
         app.world_mut().add_system(TestSystem);
-        
+
         // 测试系统添加成功（没有直接验证方式，但不应该崩溃）
         app.run_once();
     }
@@ -321,7 +339,7 @@ mod tests {
     fn test_plugins_state_management() {
         let mut app = App::new();
         assert_eq!(app.plugins_state(), PluginsState::Adding);
-        
+
         app.cleanup();
         assert_eq!(app.plugins_state(), PluginsState::Cleaned);
     }

@@ -5,6 +5,9 @@ mod window;
 mod event;
 
 pub mod prelude {
-    pub use super::window::*;
-    pub use super::raw_handle::*;
+    pub use crate::{
+        event::*,
+        window::*,
+        raw_handle::*,
+    };
 }
